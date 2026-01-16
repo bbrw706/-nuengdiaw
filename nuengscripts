@@ -1,0 +1,26 @@
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        -- สร้างแสง Highlight รอบตัวละคร
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = character
+        highlight.FillTransparency = 0.5 -- ความโปร่งใสของสีในตัว
+        highlight.OutlineTransparency = 0 -- ความชัดของเส้นขอบ
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- ทำให้มองเห็นทะลุกำแพง
+        
+        -- ส่วนการแสดงชื่อ (BillboardGui)
+        local head = character:WaitForChild("Head")
+        local bgui = Instance.new("BillboardGui")
+        bgui.Size = UDim2.new(0, 200, 0, 50)
+        bgui.Adornee = head
+        bgui.AlwaysOnTop = true -- ทำให้ชื่อมองเห็นทะลุกำแพง
+        bgui.StudsOffset = Vector3.new(0, 3, 0)
+        bgui.Parent = head
+        
+        local label = Instance.new("TextLabel")
+        label.Text = player.Name
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextColor3 = Color3.new(1, 1, 1) -- สีขาว
+        label.Parent = bgui
+    end)
+end)
