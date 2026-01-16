@@ -1,0 +1,28 @@
+using UnityEngine;
+
+public class TeamHighlight : MonoBehaviour {
+    public string myTeam = "Blue"; // กำหนดทีมของผู้เล่น
+
+    void Start() {
+        // ค้นหาผู้เล่นทุกคนในฉาก
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (GameObject player in players) {
+            TeamIdentity identity = player.GetComponent<TeamIdentity>();
+            
+            if (identity.teamName != myTeam) {
+                // ถ้าเป็นศัตรู ให้ใส่สีแดง (Red Outline)
+                ApplyHighlight(player, Color.red);
+            } else {
+                // ถ้าเป็นพวกเดียวกัน ให้ใส่สีฟ้า (Blue Outline)
+                ApplyHighlight(player, Color.cyan);
+            }
+        }
+    }
+
+    void ApplyHighlight(GameObject obj, Color color) {
+        // ใส่ Shader หรือ Material ที่มองทะลุได้ที่นี่
+        Renderer rend = obj.GetComponent<Renderer>();
+        rend.material.SetColor("_OutlineColor", color);
+    }
+}
