@@ -1,13 +1,13 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎 (MARU STYLE)",
-    SubTitle = "Mobile Premium",
+    Title = "U-HUB SUPREME 💎",
+    SubTitle = "Mobile & PC Premium",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
+    Acrylic = true, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.U -- ตั้งค่าปุ่ม U สำหรับคอมพิวเตอร์
+    MinimizeKey = Enum.KeyCode.U -- ตั้งค่าปุ่ม U เป็นปุ่มหลัก
 })
 
 -- [ ตัวแปรหลัก ]
@@ -22,8 +22,8 @@ local Tabs = {
 
 -- [ หน้า General ]
 Tabs.Main:AddParagraph({
-    Title = "Auto Farm Level",
-    Content = "ระบบจะรับเควสและบินไปฟาร์มอัตโนมัติ"
+    Title = "Status",
+    Content = "ระบบฟาร์มอัตโนมัติพร้อมทำงาน"
 })
 
 local Toggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
@@ -33,7 +33,7 @@ end)
 
 -- [ หน้า Settings ]
 local Dropdown = Tabs.Settings:AddDropdown("Weapon", {
-    Title = "Select Combat / Weapon",
+    Title = "Select Weapon",
     Values = {"Melee", "Sword", "Fruit"},
     Multi = false,
     Default = 1,
@@ -43,38 +43,40 @@ Dropdown:OnChanged(function(Value)
     _G.SelectWeapon = Value
 end)
 
--- [[ ฟังก์ชันบินวาร์ป (Tween) ]]
-function TweenTo(Pos)
-    local char = game.Players.LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local dist = (Pos.Position - char.HumanoidRootPart.Position).Magnitude
-        local speed = 350
-        local tween = game:GetService("TweenService"):Create(char.HumanoidRootPart, TweenInfo.new(dist/speed, Enum.EasingStyle.Linear), {CFrame = Pos})
-        tween:Play()
+-- [[ ระบบดักจับปุ่ม U (Force Toggle) ]]
+-- ส่วนนี้จะทำให้มั่นใจว่ากด U แล้วเมนูต้องย่อ/ขยายแน่นอน
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.U then
+        Window:Minimize() 
     end
-end
+end)
 
--- [[ ระบบฟาร์มและรับเควส ]]
+-- [[ ระบบฟาร์มเลเวล 1 (บิน + รับเควส) ]]
 task.spawn(function()
-    while task.wait() do
+    while task.wait(0.1) do
         if _G.AutoFarm then
             pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                -- เช็คเควส (ตัวอย่างเกาะแรก)
-                if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
-                    TweenTo(CFrame.new(1059, 15, 1549)) -- NPC เควส
+                local lp = game.Players.LocalPlayer
+                local char = lp.Character
+                
+                -- เช็คเควส
+                if not lp.PlayerGui.Main.Quest.Visible then
+                    -- บินไปรับเควสเกาะแรก
+                    char.HumanoidRootPart.CFrame = CFrame.new(1059, 15, 1549)
+                    task.wait(0.5)
                     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
                 else
+                    -- หามอนสเตอร์
                     local Enemy = workspace.Enemies:FindFirstChild("Bandit")
                     if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
-                        repeat task.wait()
-                            if char and char:FindFirstChild("HumanoidRootPart") then
-                                char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                                game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
-                            end
-                        until not _G.AutoFarm or Enemy.Humanoid.Health <= 0
+                        -- บินไปจ่อเหนือหัว
+                        char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+                        -- โจมตี
+                        game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
                     else
-                        TweenTo(CFrame.new(1145, 15, 1630)) -- จุดเกิดมอน
+                        -- ไปจุดเกิดมอนสเตอร์
+                        char.HumanoidRootPart.CFrame = CFrame.new(1145, 15, 1630)
                     end
                 end
             end)
@@ -82,16 +84,8 @@ task.spawn(function()
     end
 end)
 
--- [[ ระบบปุ่ม U สำหรับเปิด/ปิด (Mobile & PC) ]]
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.U then
-        Window:Minimize() -- สั่งย่อ/ขยายเมนู
-    end
-end)
-
 Fluent:Notify({
-    Title = "U-HUB Loaded",
-    Content = "กดปุ่ม U เพื่อปิด/เปิดเมนู",
+    Title = "U-HUB Loaded!",
+    Content = "กดปุ่ม [ U ] เพื่อ ปิด/เปิด เมนู",
     Duration = 5
 })
