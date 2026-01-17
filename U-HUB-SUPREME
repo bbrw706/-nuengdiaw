@@ -1,20 +1,21 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎 (MARU STYLE)",
+    Title = "U-HUB SUPREME 💎 BY(Nueng)",
     SubTitle = "Mobile & PC Premium",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.U -- ตั้งค่าปุ่ม U สำหรับย่อเมนูโดยตรง
+    MinimizeKey = Enum.KeyCode.U -- ตั้งค่าปุ่ม U สำหรับย่อเมนูในระบบ Fluent
 })
 
 -- [ ตัวแปรหลัก ]
 _G.AutoFarm = false
+_G.FastAttack = false
 _G.SelectWeapon = "Melee"
 
--- [ สร้าง Tabs แบบ Maru Hub ]
+-- [ สร้าง Tabs ]
 local Tabs = {
     Main = Window:AddTab({ Title = "General", Icon = "home" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -23,12 +24,17 @@ local Tabs = {
 -- [ หน้า General ]
 Tabs.Main:AddParagraph({
     Title = "Auto Farm Level",
-    Content = "ระบบจะรับเควสและบินไปฟาร์มอัตโนมัติ"
+    Content = "ระบบฟาร์มอัตโนมัติ (เลือกอาวุธในหน้า Settings ก่อน)"
 })
 
-local Toggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
-Toggle:OnChanged(function(Value)
+local FarmToggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
+FarmToggle:OnChanged(function(Value)
     _G.AutoFarm = Value
+end)
+
+local FastToggle = Tabs.Main:AddToggle("FastAttack", {Title = "Fast Attack (ตีรัวมากๆ)", Default = false })
+FastToggle:OnChanged(function(Value)
+    _G.FastAttack = Value
 end)
 
 -- [ หน้า Settings ]
@@ -44,31 +50,53 @@ Dropdown:OnChanged(function(Value)
 end)
 
 -- [[ ระบบแก้กดปุ่ม U ไม่ติด (Force Toggle) ]]
--- เราจะดักจับสัญญาณการกดปุ่มโดยไม่สนว่า Library จะค้างหรือไม่
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, processed)
-    -- แม้ระบบจะประมวลผลไปแล้ว (processed) แต่ถ้ากด U เราจะบังคับให้เมนูตอบสนอง
+    -- ดักจับปุ่ม U โดยตรง (Raw Key Input) เพื่อใช้ ปิด/เปิด หน้าต่าง
     if input.KeyCode == Enum.KeyCode.U then
         Window:Minimize() 
     end
 end)
 
--- [[ ระบบบินฟาร์มและโจมตี ]]
+-- [[ ระบบตีรัว (Fast Attack) - ปรับปรุงใหม่ ]]
+task.spawn(function()
+    while true do
+        task.wait() -- รันด้วยความเร็วสูงสุด
+        if _G.FastAttack and _G.AutoFarm then
+            pcall(function()
+                local Combat = game:GetService("ReplicatedStorage").Remotes.Combat
+                -- ส่งสัญญาณโจมตีแบบรัวพิเศษ (Multi-Fire)
+                Combat:FireServer()
+                Combat:FireServer()
+                Combat:FireServer()
+                Combat:FireServer()
+            end)
+        end
+    end
+end)
+
+-- [[ ระบบบินฟาร์มและรับเควส ]]
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoFarm then
             pcall(function()
                 local char = game.Players.LocalPlayer.Character
+                -- ระบบหยิบอาวุธอัตโนมัติ
+                if char and not char:FindFirstChildOfClass("Tool") then
+                    local tool = game.Players.LocalPlayer.Backpack:FindFirstChild(_G.SelectWeapon)
+                    if tool then char.Humanoid:EquipTool(tool) end
+                end
+
+                -- เช็คเควสและบินไปฟาร์ม
                 if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
-                    char.HumanoidRootPart.CFrame = CFrame.new(1059, 15, 1549) -- ไปรับเควส
+                    char.HumanoidRootPart.CFrame = CFrame.new(1059, 15, 1549) -- NPC เกาะแรก
                     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
                 else
                     local Enemy = workspace.Enemies:FindFirstChild("Bandit")
                     if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
                         char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                        game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
                     else
-                        char.HumanoidRootPart.CFrame = CFrame.new(1145, 15, 1630) -- จุดเกิด
+                        char.HumanoidRootPart.CFrame = CFrame.new(1145, 15, 1630) -- กลับจุดเกิด
                     end
                 end
             end)
@@ -77,7 +105,7 @@ task.spawn(function()
 end)
 
 Fluent:Notify({
-    Title = "U-HUB Loaded",
-    Content = "กดปุ่ม [ U ] เพื่อ ปิด/เปิด เมนู",
+    Title = "U-HUB Ready!",
+    Content = "UI สไตล์ Maru โหลดเสร็จแล้ว | กดปุ่ม [ U ] เพื่อ ปิด/เปิด เมนู",
     Duration = 5
 })
