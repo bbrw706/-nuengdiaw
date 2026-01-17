@@ -1,0 +1,70 @@
+-- [[ UNIQUE HUB - SINGLE MENU EDITION ]] --
+
+-- 1. ระบบป้องกัน (Anti-Ban & Anti-AFK) รันทันทีเมื่อเปิดสคริปต์
+pcall(function()
+    -- ป้องกันการเด้งออกจากเกม (Anti-AFK)
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
+
+    -- บล็อกการส่งข้อมูลตรวจสอบ (Anti-Cheat Bypass)
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local old = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        if getnamecallmethod() == "FireServer" and (self.Name == "AdminCheck" or self.Name == "Detection") then
+            return nil
+        end
+        return old(self, unpack({...}))
+    end)
+    setreadonly(mt, true)
+end)
+
+-- 2. สร้างหน้าเมนูหลัก (เน้นฝั่งซ้ายตามรูปภาพ)
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "UNIQUE HUB",
+    SubTitle = "by bbrw706",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+-- สร้างแท็บเมนูฝั่งซ้าย
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main Farm", Icon = "home" })
+}
+
+-- 3. ระบบ Auto Farm ในหน้าหลัก
+local Toggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
+
+Toggle:OnChanged(function()
+    _G.AutoFarm = Fluent.Options.AutoFarm.Value
+    if _G.AutoFarm then
+        -- เมื่อกดเปิด จะรันสคริปต์ฟาร์มจากลิงก์ของคุณทันที
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bbrw706/-nuengdiaw/refs/heads/main/UniqueHub"))()
+        end)
+        
+        Fluent:Notify({
+            Title = "Unique Hub",
+            Content = "ระบบ Auto Farm เริ่มทำงานแล้ว",
+            Duration = 3
+        })
+    end
+end)
+
+-- เลือกใช้เมนูที่สร้างขึ้น
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "Unique Hub",
+    Content = "โหลดเมนูฝั่งซ้ายสำเร็จพร้อมระบบกันแบน",
+    Duration = 5
+})
