@@ -1,0 +1,85 @@
+-- [[ UNIQUE HUB MOBILE EDITION ]] --
+
+-- 1. สร้างปุ่มเปิด/ปิดเมนู (Floating Button รูปตัว U)
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "UniqueHubMobile"
+
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- สีแดง
+ToggleButton.Position = UDim2.new(0.1, 0, 0.5, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Text = "U" -- รูปตัว U
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 30
+ToggleButton.Font = Enum.Font.SpecialElite
+ToggleButton.Draggable = true -- ให้คุณลากปุ่มไปวางตรงไหนก็ได้บนจอ
+
+UICorner.CornerRadius = UDim.new(0, 15) -- ขอบมน
+UICorner.Parent = ToggleButton
+
+-- 2. ระบบกันแบนและกันหลุด (รันเบื้องหลังทันที)
+pcall(function()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
+end)
+
+-- 3. เรียกใช้งานเมนูหลัก (เน้นฝั่งซ้ายตามที่คุณชอบ)
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "UNIQUE HUB",
+    SubTitle = "Mobile Support",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(450, 320), -- ขนาดพอดีสำหรับจอเล็กลง
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main Farm", Icon = "home" })
+}
+
+-- ระบบเปิด/ปิดเมนูด้วยปุ่มรูปตัว U
+ToggleButton.MouseButton1Click:Connect(function()
+    Window:Minimize()
+end)
+
+-- 4. ช่องที่ 1: ออโต้ฟาร์ม (กดแล้วทำงานทันที)
+local Toggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
+
+Toggle:OnChanged(function()
+    _G.AutoFarm = Fluent.Options.AutoFarm.Value
+    if _G.AutoFarm then
+        -- รันสคริปต์จากลิงก์ GitHub ของคุณ
+        spawn(function()
+            while _G.AutoFarm do
+                pcall(function()
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/bbrw706/-nuengdiaw/refs/heads/main/UniqueHub"))()
+                end)
+                task.wait(5) -- เว้นระยะโหลดเพื่อไม่ให้เกมค้าง
+            end
+        end)
+        
+        Fluent:Notify({
+            Title = "Unique Hub",
+            Content = "Auto Farm กำลังทำงาน...",
+            Duration = 3
+        })
+    end
+end)
+
+-- แจ้งเตือนเมื่อรันครั้งแรก
+Fluent:Notify({
+    Title = "Unique Hub",
+    Content = "ติดตั้งปุ่มรูปตัว U เรียบร้อยแล้ว",
+    Duration = 5
+})
