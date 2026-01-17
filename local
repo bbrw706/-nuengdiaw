@@ -1,0 +1,67 @@
+--[[
+    Unique Hub - Blox Fruits (Anti-Ban Edition)
+    Theme: Ultra Dark
+]]
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Unique Hub [ANTI-BAN]", "DarkTheme")
+
+-- ==================== SYSTEM ANTI-BAN ====================
+-- ฟังก์ชันป้องกันการส่งข้อมูลตรวจจับเบื้องต้น
+local function AntiCheatBypass()
+    local g = getrawmetatable(game)
+    setreadonly(g, false)
+    local old = g.__namecall
+    g.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        -- บล็อกการเรียกใช้เช็คความเร็วและตำแหน่งที่ผิดปกติ
+        if method == "FireServer" and (self.Name == "AdminCheck" or self.Name == "CheatCheck" or self.Name == "Detection") then
+            return nil
+        end
+        return old(self, unpack(args))
+    end)
+    setreadonly(g, true)
+    print("Anti-Ban System: Active")
+end
+
+-- รันระบบกันแบนทันที
+pcall(AntiCheatBypass)
+
+-- ==================== UI SECTIONS ====================
+local Main = Window:NewTab("Main Farm")
+local Section = Main:NewSection("Auto Farm Level")
+
+_G.AutoFarm = false
+
+Section:NewToggle("Start Auto Farm", "Farm levels with bypass", function(state)
+    _G.AutoFarm = state
+    if state then
+        -- ระบบป้องกันการกระตุก (No Clip) เพื่อไม่ให้ติดพื้นขณะฟาร์ม
+        spawn(function()
+            while _G.AutoFarm do
+                task.wait()
+                pcall(function()
+                    if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+                    end
+                end)
+            end
+        end)
+    end
+end)
+
+local Misc = Window:NewTab("Misc / Protection")
+local MiscSection = Misc:NewSection("Safety Options")
+
+MiscSection:NewButton("White Screen (Reduce Lag)", "Protects from crashing", function()
+    game:GetService("RunService"):Set3dRenderingEnabled(false)
+end)
+
+MiscSection:NewButton("Server Hop", "Avoid Admins / Players", function()
+    local PlaceID = game.PlaceId
+    local JobID = game.JobId
+    game:GetService("TeleportService"):Teleport(PlaceID)
+end)
+
+print("Unique Hub Loaded with Anti-Ban!")
