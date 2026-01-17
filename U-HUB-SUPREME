@@ -1,12 +1,12 @@
--- [[ U-HUB SUPREME | FINAL REPAIR ]]
--- แก้ไข Error: SchemeColor และลดอาการกระตุก
+-- [[ U-HUB SUPREME | FINAL REPAIR 2026 ]]
+-- Fix: Error SchemeColor, Fix: Mobile Lag, Fix: Toggle U
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
--- แก้จุดตาย: ใช้ชื่อ Theme ที่เป็นมาตรฐาน (Midnight) และไม่ใส่ค่าสีซ้อน
+-- แก้จุดตาย: ใช้ชื่อ Theme "Midnight" (ห้ามใส่สีกำหนดเองเพราะจะทำให้ Error แบบในรูป)
 local Window = Library.CreateLib("U-HUB SUPREME 💎", "Midnight")
 
--- [ สร้าง Tab และ Section ]
+-- [ Tab: Main ]
 local MainTab = Window:NewTab("ฟาร์ม & บอส")
 local MainSection = MainTab:NewSection("ระบบหลัก")
 
@@ -17,16 +17,18 @@ MainSection:NewToggle("เปิดฟาร์มเลเวล", "ตีม�
     _G.AutoFarm = v
 end)
 
-MainSection:NewToggle("ตีเร็ว (Fast Attack)", "ช่วยลดอาการหน่วง", function(v)
+MainSection:NewToggle("ตีเร็ว (Fast Attack)", "ลดอาการหน่วงของเครื่อง", function(v)
     _G.FastAttack = v
 end)
 
--- [[ ระบบการทำงาน (ปรับปรุงใหม่ไม่ให้เครื่องค้าง) ]]
+-- [[ ระบบการทำงาน: แก้ไขอาการกระตุก ]]
 task.spawn(function()
     while true do
-        task.wait(0.1) -- ใส่ดีเลย์นิดหน่อยเพื่อไม่ให้ Log DMG เด้งรัวจนเครื่องกระตุก
+        -- ใช้ task.wait(0.1) เพื่อไม่ให้ Log DMG เด้งรัวจนเครื่อง Acer กระตุกค้าง
+        task.wait(0.1) 
         if _G.AutoFarm then
             pcall(function()
+                -- สั่งโจมตี
                 game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
                 game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
             end)
@@ -34,11 +36,11 @@ task.spawn(function()
     end
 end)
 
--- ปุ่มกดปิด/เปิดเมนู (ปุ่ม U)
+-- ระบบกดปุ่ม U เพื่อปิด/เปิดเมนู
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.U then
         Library:toggleGui()
     end
 end)
 
-print("U-HUB FIXED: ระบบพร้อมทำงานแล้ว!")
+print("U-HUB: แก้ไขระบบเรียบร้อยแล้ว!")
