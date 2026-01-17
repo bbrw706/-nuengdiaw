@@ -1,0 +1,81 @@
+-- สร้าง ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "NuengMenu"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
+
+-- สร้างปุ่มเปิด/ปิดหลัก (Main Button)
+local mainButton = Instance.new("TextButton")
+mainButton.Size = UDim2.new(0, 100, 0, 50)
+mainButton.Position = UDim2.new(0, 10, 0, 10)
+mainButton.Text = "nueng"
+mainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+mainButton.Parent = screenGui
+
+-- สร้าง Frame สำหรับเมนู
+local menuFrame = Instance.new("Frame")
+menuFrame.Size = UDim2.new(0, 200, 0, 150)
+menuFrame.Position = UDim2.new(0.5, -100, 0.5, -75)
+menuFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+menuFrame.Visible = false -- เริ่มต้นให้ปิดไว้
+menuFrame.Parent = screenGui
+
+-- สร้างหัวข้อในเมนู
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Text = "Thailand - nueng"
+titleLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Parent = menuFrame
+
+-- สร้างปุ่มเปิด/ปิด อมตะ (God Mode Toggle)
+local godModeBtn = Instance.new("TextButton")
+godModeBtn.Size = UDim2.new(0, 160, 0, 40)
+godModeBtn.Position = UDim2.new(0, 20, 0, 60)
+godModeBtn.Text = "God Mode: OFF"
+godModeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+godModeBtn.Parent = menuFrame
+
+-------------------------------------------------------------------
+-- ระบบ Logic การทำงาน
+-------------------------------------------------------------------
+
+local isGodMode = false
+
+-- ฟังก์ชันสลับการเปิด/ปิดเมนู
+mainButton.MouseButton1Click:Connect(function()
+    menuFrame.Visible = not menuFrame.Visible
+end)
+
+-- ฟังก์ชันระบบอมตะ (God Mode)
+godModeBtn.MouseButton1Click:Connect(function()
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        if not isGodMode then
+            -- เปิดอมตะ
+            isGodMode = true
+            character.Humanoid.MaxHealth = math.huge
+            character.Humanoid.Health = math.huge
+            godModeBtn.Text = "God Mode: ON"
+            godModeBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        else
+            -- ปิดอมตะ (กลับเป็นปกติ)
+            isGodMode = false
+            character.Humanoid.MaxHealth = 100
+            character.Humanoid.Health = 100
+            godModeBtn.Text = "God Mode: OFF"
+            godModeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        end
+    end
+end)
+
+-- ป้องกันเลือดลดขณะเปิดโหมดอมตะ
+game:GetService("RunService").Stepped:Connect(function()
+    if isGodMode then
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.Health = character.Humanoid.MaxHealth
+        end
+    end
+end)
