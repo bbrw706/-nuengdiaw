@@ -1,90 +1,44 @@
--- [[ U-HUB SUPREME | ULTIMATE EDITION ]]
--- ระบบปิด-เปิดเมนูด้วยปุ่ม: [ U ]
+-- [[ U-HUB SUPREME | FINAL REPAIR ]]
+-- แก้ไข Error: SchemeColor และลดอาการกระตุก
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("U-HUB SUPREME 💎 (v2026)", "DarkScene")
 
--- [ ตั้งค่าปุ่มปิด-เปิด ]
-_G.ToggleKey = Enum.KeyCode.U -- ตั้งค่าเริ่มต้นเป็นปุ่ม U
+-- แก้จุดตาย: ใช้ชื่อ Theme ที่เป็นมาตรฐาน (Midnight) และไม่ใส่ค่าสีซ้อน
+local Window = Library.CreateLib("U-HUB SUPREME 💎", "Midnight")
 
--- รายการตัวแปร
+-- [ สร้าง Tab และ Section ]
+local MainTab = Window:NewTab("ฟาร์ม & บอส")
+local MainSection = MainTab:NewSection("ระบบหลัก")
+
 _G.AutoFarm = false
 _G.FastAttack = false
-_G.AutoBoss = false
-_G.SelectedBoss = ""
-_G.SelectWeapon = "Melee"
 
-local BossList = {"Saber Expert", "The Saw", "Greybeard", "Don Swan", "Jeremy", "Fajita", "Ice Admiral", "Tide Keeper"}
-
--- [ Tab: หน้าหลัก ]
-local MainTab = Window:NewTab("หน้าหลัก")
-local MainSection = MainTab:NewSection("ระบบฟาร์ม")
-
-MainSection:NewDropdown("เลือกอาวุธ", "เลือกอาวุธที่จะใช้ฟาร์ม", {"Melee", "Sword", "Fruit"}, function(v)
-    _G.SelectWeapon = v
+MainSection:NewToggle("เปิดฟาร์มเลเวล", "ตีมอนสเตอร์", function(v)
+    _G.AutoFarm = v
 end)
 
-MainSection:NewToggle("เปิดฟาร์มเลเวล", "ตีมอนสเตอร์อัตโนมัติ", function(v) _G.AutoFarm = v end)
-MainSection:NewToggle("ตีเร็ว (Fast Attack)", "", function(v) _G.FastAttack = v end)
-
--- [ Tab: ระบบบอส ]
-local BossTab = Window:NewTab("ล่าบอส")
-local BossSection = BossTab:NewSection("เลือกบอส")
-
-BossSection:NewDropdown("เลือกรายชื่อบอส", "", BossList, function(v) _G.SelectedBoss = v end)
-BossSection:NewToggle("เริ่มตีบอส (Auto Boss)", "", function(v) _G.AutoBoss = v end)
-
--- [ Tab: ตั้งค่า ]
-local ConfigTab = Window:NewTab("ตั้งค่า")
-local ConfigSection = ConfigTab:NewSection("ปุ่มปิด-เปิดเมนู")
-
-ConfigSection:NewKeybind("เปลี่ยนปุ่มปิด-เปิด", "กดปุ่มที่ต้องการเพื่อเปลี่ยน", _G.ToggleKey, function(key)
-	Library:toggleGui() -- ฟังก์ชันของ Kavo สำหรับสลับการแสดงผล GUI
+MainSection:NewToggle("ตีเร็ว (Fast Attack)", "ช่วยลดอาการหน่วง", function(v)
+    _G.FastAttack = v
 end)
 
--- [[ ระบบจัดการปุ่มกด (UserInputService) ]]
-game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == _G.ToggleKey then
-        Library:toggleGui()
-    end
-end)
-
--- [ ฟังก์ชันสวมใส่อาวุธ ]
-function EquipWeapon()
-    pcall(function()
-        for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-            if v.ToolTip == _G.SelectWeapon then
-                game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-            end
-        end
-    end)
-end
-
--- [ ระบบการทำงานหลัก ]
-spawn(function()
-    while task.wait() do
-        if _G.AutoFarm or _G.AutoBoss then
+-- [[ ระบบการทำงาน (ปรับปรุงใหม่ไม่ให้เครื่องค้าง) ]]
+task.spawn(function()
+    while true do
+        task.wait(0.1) -- ใส่ดีเลย์นิดหน่อยเพื่อไม่ให้ Log DMG เด้งรัวจนเครื่องกระตุก
+        if _G.AutoFarm then
             pcall(function()
-                EquipWeapon()
-                
-                if _G.AutoBoss and _G.SelectedBoss ~= "" then
-                    local Boss = workspace.Enemies:FindFirstChild(_G.SelectedBoss)
-                    if Boss and Boss:FindFirstChild("Humanoid") and Boss.Humanoid.Health > 0 then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                        if _G.FastAttack then
-                            game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
-                            game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0))
-                        end
-                    end
-                elseif _G.AutoFarm then
-                    if _G.FastAttack then
-                        game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
-                        game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0))
-                    end
-                end
+                game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
+                game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
             end)
         end
     end
 end)
 
-print("U-HUB ULTIMATE: กด [ U ] เพื่อปิด/เปิดเมนู")
+-- ปุ่มกดปิด/เปิดเมนู (ปุ่ม U)
+game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.U then
+        Library:toggleGui()
+    end
+end)
+
+print("U-HUB FIXED: ระบบพร้อมทำงานแล้ว!")
