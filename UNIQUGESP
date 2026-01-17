@@ -1,0 +1,38 @@
+local tool = script.Parent
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- ตั้งค่าความแม่นยำ
+local SPREAD = 0 -- ถ้าเป็น 0 คือปืนนิ่งสนิท ไม่มีการกระจายของกระสุน
+local RANGE = 1000
+
+tool.Activated:Connect(function()
+    local startPos = tool.Handle.Position
+    local targetPos = mouse.Hit.p
+    
+    -- คำนวณทิศทางแบบตรงเป๊ะ
+    local direction = (targetPos - startPos).Unit * RANGE
+    
+    -- ระบบ Raycast (การยิงลำแสง)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {player.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    
+    local raycastResult = workspace:Raycast(startPos, direction, raycastParams)
+    
+    if raycastResult then
+        -- ยิงโดนอะไรบางอย่าง
+        local hitPart = raycastResult.Instance
+        print("ยิงถูกวัตถุ: " .. hitPart.Name)
+        
+        -- สร้าง Effect จุดที่กระสุนตก (Bullet Hole)
+        local hole = Instance.new("Part")
+        hole.Size = Vector3.new(0.2, 0.2, 0.2)
+        hole.Color = Color3.fromRGB(0, 0, 0)
+        hole.Anchored = true
+        hole.CanCollide = false
+        hole.Position = raycastResult.Position
+        hole.Parent = workspace
+        game:GetService("Debris"):AddItem(hole, 2)
+    end
+end)
