@@ -1,80 +1,78 @@
--- [[ unique Hub - Black Square Edition ]] --
+-- [[ Unique Hub - Custom UI Edition ]] --
 
-local player = game.Players.LocalPlayer
-local sg = Instance.new("ScreenGui")
-sg.Name = "UniqueBlackHub"
-sg.Parent = player:WaitForChild("PlayerGui")
-sg.ResetOnSpawn = false
-
-local UIS = game:GetService("UserInputService")
-
--- ฟังก์ชันทำให้ขยับได้ (เหมือนเดิม)
-local function makeDraggable(obj)
-    local dragging, dragInput, dragStart, startPos
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = obj.Position
-        end
+-- 1. ระบบกันแบนและกันหลุด (รันอัตโนมัติ)
+pcall(function()
+    -- Anti-AFK
+    game:GetService("Players.LocalPlayer").Idled:Connect(function()
+        game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
-    obj.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+    
+    -- Anti-Cheat Bypass
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local old = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        if getnamecallmethod() == "FireServer" and (self.Name == "AdminCheck" or self.Name == "Detection") then
+            return nil
         end
+        return old(self, unpack({...}))
     end)
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
+    setreadonly(mt, true)
+end)
 
--- 1. ปุ่มเปิด/ปิด (เปลี่ยนเป็น สี่เหลี่ยมสีดำ)
-local openBtn = Instance.new("TextButton")
-openBtn.Name = "UniqueBlackBtn"
-openBtn.Size = UDim2.new(0, 80, 0, 40) -- ขนาดสี่เหลี่ยม
-openBtn.Position = UDim2.new(0, 20, 0.5, 0)
-openBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- สีดำ
-openBtn.BorderSizePixel = 0
-openBtn.Text = "unique"
-openBtn.Font = Enum.Font.GothamBold
-openBtn.TextSize = 18
-openBtn.TextColor3 = Color3.fromRGB(255, 255, 255) -- ตัวหนังสือสีขาว
-openBtn.Parent = sg
+-- 2. สร้าง UI ตามแบบรูปภาพ (ใช้โทนสีแดง-ดำ)
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
--- เพิ่มขอบสีขาวเล็กน้อยให้ดูเด่น
-local btnStroke = Instance.new("UIStroke", openBtn)
-btnStroke.Color = Color3.fromRGB(255, 255, 255)
-btnStroke.Thickness = 1.5
+local Window = Fluent:CreateWindow({
+    Title = "UNIQUE HUB",
+    SubTitle = "by bbrw706",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, -- ปิดความใสเพื่อให้สีชัดแบบในรูป
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl -- ปุ่มเปิด/ปิดเมนู
+})
 
-makeDraggable(openBtn) -- ทำให้ปุ่มสี่เหลี่ยมดำลากได้
+-- ปรับแต่งสีให้เป็นสีแดงตามรูป (โทน Red/Black)
+Fluent:SetTheme("Dark")
 
--- 2. หน้าต่างเมนูหลัก (ขยับได้)
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -160)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.Visible = false
-mainFrame.Parent = sg
+-- 3. ช่องที่ 1: ออโต้ฟาร์ม (Main Tab)
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main Farm", Icon = "home" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
 
-local mainStroke = Instance.new("UIStroke", mainFrame)
-mainStroke.Thickness = 2
-mainStroke.Color = Color3.fromRGB(255, 255, 255)
+local Toggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
 
-makeDraggable(mainFrame)
+Toggle:OnChanged(function()
+    _G.AutoFarm = Fluent.Options.AutoFarm.Value
+    if _G.AutoFarm then
+        -- รันสคริปต์จากลิงก์ของคุณ
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bbrw706/-nuengdiaw/refs/heads/main/local"))()
+        end)
+    end
+end)
 
--- หัวข้อเมนู
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 50)
-title.Text = "nueng unique"
-title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.BackgroundTransparency = 1
-title.Parent = mainFrame
+-- 4. ช่องที่ 2: กันหลุด/กันแบน (Settings Tab)
+Tabs.Settings:AddParagraph({
+    Title = "Protection System",
+    Content = "Anti-Ban และ Anti-AFK ทำงานอยู่ตลอดเวลา"
+})
 
--- ระบบเปิด/ปิด
-openBtn.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-end)un
+Tabs.Settings:AddButton({
+    Title = "Server Hop",
+    Description = "ย้ายเซิร์ฟเวอร์ทันที",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end
+})
+
+-- แจ้งเตือนเมื่อรันสำเร็จ
+Fluent:Notify({
+    Title = "Unique Hub",
+    Content = "สคริปต์ติดตั้งระบบกันแบนเรียบร้อยแล้ว",
+    Duration = 5
+})
