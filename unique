@@ -1,0 +1,151 @@
+-- [[ Unique "nueng" Neon Menu - Thailand Edition ]] --
+
+local player = game.Players.LocalPlayer
+local sg = Instance.new("ScreenGui")
+sg.Name = "NuengUniqueHub"
+sg.Parent = player:WaitForChild("PlayerGui")
+sg.ResetOnSpawn = false
+
+-- ตัวแปรสำหรับการขยับ
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- 1. ปุ่มเปิด/ปิด (Floating Icon)
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0, 60, 0, 60)
+openBtn.Position = UDim2.new(0, 20, 0.8, 0)
+openBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Text = "N"
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 30
+openBtn.TextColor3 = Color3.fromRGB(0, 102, 204)
+openBtn.Parent = sg
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(1, 0)
+btnCorner.Parent = openBtn
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(204, 0, 0)
+btnStroke.Thickness = 3
+btnStroke.Parent = openBtn
+
+-- 2. ตัวเมนูหลัก (The Frame)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Visible = false
+mainFrame.Parent = sg
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 20)
+mainCorner.Parent = mainFrame
+
+-- ขอบเรืองแสงสีธงชาติ
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 4
+mainStroke.Color = Color3.fromRGB(255, 255, 255)
+mainStroke.Parent = mainFrame
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(204, 0, 0)), -- แดง
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)), -- ขาว
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 102, 204)) -- น้ำเงิน
+})
+gradient.Parent = mainStroke
+
+-- หัวข้อ nueng
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "nueng"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 25
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Parent = mainFrame
+
+-----------------------------------------------------------
+-- ฟังก์ชันขยับได้ (Draggable System)
+-----------------------------------------------------------
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+mainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if dragging and dragInput then
+        update(dragInput)
+    end
+end)
+
+-----------------------------------------------------------
+-- ปุ่มและฟีเจอร์ภายใน
+-----------------------------------------------------------
+local function createButton(name, pos, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 200, 0, 45)
+    b.Position = pos
+    b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    b.Text = name
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamSemibold
+    b.Parent = mainFrame
+    
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 10)
+    bCorner.Parent = b
+    
+    b.MouseButton1Click:Connect(callback)
+end
+
+-- ใช้งาน
+createButton("Speed Boost (100)", UDim2.new(0, 25, 0, 70), function()
+    player.Character.Humanoid.WalkSpeed = 100
+end)
+
+createButton("Super Jump", UDim2.new(0, 25, 0, 130), function()
+    player.Character.Humanoid.JumpPower = 120
+end)
+
+createButton("Reset All", UDim2.new(0, 25, 0, 190), function()
+    player.Character.Humanoid.WalkSpeed = 16
+    player.Character.Humanoid.JumpPower = 50
+end)
+
+-- ระบบเปิด/ปิดพร้อม Animation
+openBtn.MouseButton1Click:Connect(function()
+    if not mainFrame.Visible then
+        mainFrame.Visible = true
+        mainFrame.Size = UDim2.new(0, 0, 0, 0)
+        mainFrame:TweenSize(UDim2.new(0, 250, 0, 300), "Out", "Back", 0.4, true)
+    else
+        mainFrame:TweenSize(UDim2.new(0, 0, 0, 0), "In", "Back", 0.4, true, function()
+            mainFrame.Visible = false
+        end)
+    end
