@@ -1,0 +1,58 @@
+-- Universal ESP (Team Colors: Ally=Blue, Enemy=Red)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function createESP(player)
+    player.CharacterAdded:Connect(function(character)
+        -- รอให้โหลดตัวละครเสร็จ
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = character
+        highlight.Name = "ESP_Highlight"
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        
+        -- ระบบเช็คทีมและเปลี่ยนสี
+        local function updateColor()
+            if player.Team == LocalPlayer.Team then
+                highlight.FillColor = Color3.fromRGB(0, 162, 255) -- สีฟ้า (ทีมเดียวกัน)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            else
+                highlight.FillColor = Color3.fromRGB(255, 0, 0) -- สีแดง (ศัตรู)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            end
+        end
+
+        updateColor()
+        
+        -- อัปเดตสีอัตโนมัติเมื่อมีการเปลี่ยนทีม
+        player:GetPropertyChangedSignal("Team"):Connect(updateColor)
+    end)
+end
+
+-- รัน ESP ให้กับคนที่อยู่ในเซิร์ฟเวอร์อยู่แล้ว
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createESP(player)
+        if player.Character then
+            -- ถ้ามีตัวละครอยู่แล้วให้สร้าง Highlight ทันที
+            local char = player.Character
+            local highlight = char:FindFirstChild("ESP_Highlight") or Instance.new("Highlight", char)
+            highlight.Name = "ESP_Highlight"
+            highlight.FillTransparency = 0.5
+            
+            local function quickUpdate()
+                if player.Team == LocalPlayer.Team then
+                    highlight.FillColor = Color3.fromRGB(0, 162, 255)
+                else
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                end
+            end
+            quickUpdate()
+        end
+    end
+end
+
+-- รัน ESP ให้กับคนที่เพิ่งจอยเกมเข้ามา
+Players.PlayerAdded:Connect(createESP)
+
+print("ESP Script Loaded: Team Colors Active")
