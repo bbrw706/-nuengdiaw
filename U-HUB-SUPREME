@@ -1,95 +1,87 @@
--- [[ U-HUB SUPREME | FULL COMPLETED ]]
--- รวมทุกฟังก์ชัน + แก้ Error + ลดกระตุก
+-- [[ U-HUB SUPREME | THE FINAL FIX ]]
+-- เวอร์ชั่นแก้รันไม่ติด + รวมทุกฟังก์ชั่น
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Success, Library = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+end)
+
+if not Success or not Library then
+    warn("Library Error: โหลดไม่สำเร็จ!")
+    return
+end
+
 local Window = Library.CreateLib("U-HUB SUPREME 💎", "Midnight")
 
--- [ ตั้งค่าตัวแปร ]
+-- [ ค่าเริ่มต้น ]
 _G.AutoFarm = false
-_G.FastAttack = false
 _G.AutoBoss = false
-_G.SelectedBoss = ""
+_G.FastAttack = false
 _G.SelectWeapon = "Melee"
-_G.AutoStats_Melee = false
-_G.AutoStats_Defense = false
+_G.SelectedBoss = ""
 
-local BossList = {"Saber Expert", "The Saw", "Greybeard", "Don Swan", "Jeremy", "Fajita", "Ice Admiral", "Tide Keeper"}
+-- [ หน้าหลัก ]
+local MainTab = Window:NewTab("Main/Boss")
+local MainSection = MainTab:NewSection("ระบบฟาร์ม")
 
--- [[ TAB: หน้าหลัก ]]
-local MainTab = Window:NewTab("ฟาร์ม & บอส")
-local MainSection = MainTab:NewSection("ระบบฟาร์มหลัก")
-
-MainSection:NewDropdown("เลือกอาวุธ", "เลือกอาวุธที่จะใช้", {"Melee", "Sword", "Fruit"}, function(v)
+MainSection:NewDropdown("เลือกอาวุธ", "", {"Melee", "Sword", "Fruit"}, function(v)
     _G.SelectWeapon = v
 end)
 
-MainSection:NewToggle("เปิดฟาร์มเลเวล", "ตีมอนสเตอร์อัตโนมัติ", function(v) 
-    _G.AutoFarm = v 
-end)
+MainSection:NewToggle("เปิดฟาร์มเลเวล", "", function(v) _G.AutoFarm = v end)
+MainSection:NewToggle("ตีเร็ว (Fast Attack)", "", function(v) _G.FastAttack = v end)
 
-MainSection:NewToggle("ตีเร็ว (Fast Attack)", "ลดกระตุก + ตีไว", function(v) 
-    _G.FastAttack = v 
-end)
-
--- [[ TAB: ระบบบอส ]]
+-- [ ระบบบอส ]
 local BossSection = MainTab:NewSection("ล่าบอส")
-BossSection:NewDropdown("เลือกบอส", "", BossList, function(v) _G.SelectedBoss = v end)
-BossSection:NewToggle("เริ่มล่าบอส", "วาร์ปไปตบเซียน", function(v) _G.AutoBoss = v end)
+BossSection:NewDropdown("เลือกบอส", "", {"Saber Expert", "The Saw", "Greybeard", "Don Swan", "Jeremy", "Fajita"}, function(v)
+    _G.SelectedBoss = v
+end)
+BossSection:NewToggle("เริ่มล่าบอส", "", function(v) _G.AutoBoss = v end)
 
--- [[ TAB: สเตตัส ]]
-local StatsTab = Window:NewTab("สเตตัส")
-local StatsSection = StatsTab:NewSection("อัปสเตตัสอัตโนมัติ")
+-- [ ระบบสเตตัส ]
+local StatsTab = Window:NewTab("Stats")
+local StatsSection = StatsTab:NewSection("อัปสเตตัส")
+StatsSection:NewToggle("อัป Melee", "", function(v) _G.AutoStats_Melee = v end)
+StatsSection:NewToggle("อัป Defense", "", function(v) _G.AutoStats_Defense = v end)
 
-StatsSection:NewToggle("อัป Melee (สายหมัด)", "", function(v) _G.AutoStats_Melee = v end)
-StatsSection:NewToggle("อัป Defense (สายเลือด)", "", function(v) _G.AutoStats_Defense = v end)
+-- [ ระบบตั้งค่า ]
+local ConfigTab = Window:NewTab("Config")
+ConfigTab:NewSection("ปุ่มปิด/เปิดคือ [ U ]")
 
--- [[ TAB: ตั้งค่า ]]
-local ConfigTab = Window:NewTab("ตั้งค่า")
-ConfigTab:NewSection("กดปุ่ม [ U ] เพื่อปิด/เปิดเมนู")
-
--- [[ ฟังก์ชัน: สวมใส่อาวุธ ]]
-function EquipWeapon()
-    pcall(function()
-        local p = game.Players.LocalPlayer
-        if p.Character and not p.Character:FindFirstChildOfClass("Tool") then
-            local tool = p.Backpack:FindFirstChild(_G.SelectWeapon) or p.Backpack:FindFirstChildOfClass("Tool")
-            if tool then p.Character.Humanoid:EquipTool(tool) end
-        end
-    end)
-end
-
--- [[ LOOP: ระบบทำงานหลัก ]]
+-- [[ Logic การทำงาน ]]
 task.spawn(function()
-    while task.wait(0.1) do -- ใส่ Delay 0.1 เพื่อไม่ให้เครื่องกระตุก
+    while task.wait(0.1) do
         pcall(function()
             if _G.AutoFarm or _G.AutoBoss then
-                EquipWeapon()
+                -- สวมอาวุธ
+                local p = game.Players.LocalPlayer
+                if p.Character and not p.Character:FindFirstChildOfClass("Tool") then
+                    local tool = p.Backpack:FindFirstChild(_G.SelectWeapon) or p.Backpack:FindFirstChildOfClass("Tool")
+                    if tool then p.Character.Humanoid:EquipTool(tool) end
+                end
                 
-                -- โหมดล่าบอส
+                -- ตีบอส
                 if _G.AutoBoss and _G.SelectedBoss ~= "" then
                     local Boss = workspace.Enemies:FindFirstChild(_G.SelectedBoss) or workspace.Map:FindFirstChild(_G.SelectedBoss)
                     if Boss and Boss:FindFirstChild("HumanoidRootPart") and Boss.Humanoid.Health > 0 then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+                        p.Character.HumanoidRootPart.CFrame = Boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
                     end
                 end
-                
-                -- ระบบโจมตี
-                game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
-                game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
+
+                -- ตีเร็ว
+                if _G.FastAttack then
+                    game:GetService("ReplicatedStorage").Remotes.Combat:FireServer()
+                    game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
+                end
             end
             
-            -- ระบบอัปสเตตัส
-            if _G.AutoStats_Melee then
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", 1)
-            end
-            if _G.AutoStats_Defense then
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense", 1)
-            end
+            -- อัปสเตตัส
+            if G.AutoStats_Melee then game:GetService("ReplicatedStorage").Remotes.CommF:InvokeServer("AddPoint", "Melee", 1) end
+            if G.AutoStats_Defense then game:GetService("ReplicatedStorage").Remotes.CommF:InvokeServer("AddPoint", "Defense", 1) end
         end)
     end
 end)
 
--- ระบบปุ่ม U
+-- ปุ่ม U
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.U then
         Library:toggleGui()
