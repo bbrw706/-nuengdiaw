@@ -1,0 +1,104 @@
+-- [[ nueng Speed Hub - Unique Edition ]] --
+local player = game.Players.LocalPlayer
+local sg = Instance.new("ScreenGui")
+sg.Name = "NuengSpeedHub"
+sg.Parent = player:WaitForChild("PlayerGui")
+sg.ResetOnSpawn = false
+
+-- 1. ปุ่มเปิด/ปิด (Floating Icon)
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0, 50, 0, 50)
+openBtn.Position = UDim2.new(0, 10, 0.5, 0)
+openBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+openBtn.Text = "N"
+openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 25
+openBtn.Parent = sg
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(1, 0)
+btnCorner.Parent = openBtn
+
+-- 2. เมนูหลัก (หน้าตา Unique ขอบสีธงชาติ)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true -- ทำให้ขยับได้
+mainFrame.Parent = sg
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.Parent = mainFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Parent = mainFrame
+
+local grad = Instance.new("UIGradient")
+grad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 255))
+})
+grad.Parent = stroke
+
+-- หัวข้อ nueng
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "nueng Speed"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.BackgroundTransparency = 1
+title.Parent = mainFrame
+
+--- ฟังก์ชันสร้างปุ่มปรับความเร็ว ---
+local speeds = {50, 250, 350, 600}
+local startY = 60
+
+for _, sValue in pairs(speeds) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 200, 0, 45)
+    b.Position = UDim2.new(0, 25, 0, startY)
+    b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    b.Text = "Speed: " .. sValue
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamSemibold
+    b.Parent = mainFrame
+    
+    local bCorner = Instance.new("UICorner")
+    bCorner.Parent = b
+    
+    b.MouseButton1Click:Connect(function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = sValue
+        end
+    end)
+    
+    startY = startY + 55
+end
+
+-- ปุ่ม Reset
+local reset = Instance.new("TextButton")
+reset.Size = UDim2.new(0, 200, 0, 45)
+reset.Position = UDim2.new(0, 25, 0, 285)
+reset.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+reset.Text = "Reset Speed (16)"
+reset.TextColor3 = Color3.fromRGB(255, 255, 255)
+reset.Parent = mainFrame
+Instance.new("UICorner").Parent = reset
+
+reset.MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+-- เปิด/ปิด
+openBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
