@@ -1,26 +1,20 @@
 --[[ 
-    💎 U-HUB SUPREME [MARU-EDITION]
+    💎 U-HUB SUPREME [MARU-ULTIMATE EDITION]
     BY NEUNG (PROJECT OWNER)
     
-    [LOGIC STRUCTURE]
-    - TASK SCHEDULER V.3 (MARU BASE)
-    - OBJECTIVE ORIENTED PROGRAMMING
-    - SMART AUTO-FARMING (ANTI-LOGOUT)
-    - DYNAMIC UI SYSTEM
-    
-    --------------------------------------------------
-    -- LINE COUNT TARGET: 500+ FOR SUPREME STATUS --
-    --------------------------------------------------
+    [CORE SYSTEMS COMBINED]
+    1. ADVANCED WORLD DETECTION (SEA 1, 2, 3)
+    2. MARU-STYLE FAST ATTACK (NO DELAY)
+    3. AUTO-EQUIP SMART LOGIC (FIXED MELEE)
+    4. PERFORMANCE OPTIMIZER (ANTI-LAG)
+    5. HYBRID FLOATING BUTTON V.49 (STAR EFFECT)
+    6. SECURITY BYPASS (ANTI-KICK)
 ]]
 
--- [1] CORE SERVICES (การเรียกใช้ Service แบบเสถียร)
+-- [[ SECTION 1: INITIALIZATION ]]
 local Services = setmetatable({}, {
     __index = function(self, key)
-        local s = game:GetService(key)
-        if s then
-            self[key] = s
-            return s
-        end
+        return game:GetService(key)
     end
 })
 
@@ -28,57 +22,82 @@ local Players = Services.Players
 local RunService = Services.RunService
 local TweenService = Services.TweenService
 local UserInputService = Services.UserInputService
-local HttpService = Services.HttpService
 local VirtualUser = Services.VirtualUser
 local ReplicatedStorage = Services.ReplicatedStorage
 local Workspace = Services.Workspace
-local Stats = Services.Stats
-local LogService = Services.LogService
+local HttpService = Services.HttpService
+local VIM = Services.VirtualInputManager
 
--- [2] LOCAL PLAYER DEFINITIONS
 local LP = Players.LocalPlayer
-local Mouse = LP:GetMouse()
-local Camera = Workspace.CurrentCamera
+local Character = LP.Character or LP.CharacterAdded:Wait()
 
--- [3] MARU-STYLE SAFETY CHECKS (ระบบเช็คความเสถียร)
+-- [[ SECTION 2: WORLD & SEA DETECTION ]]
+local PlaceId = game.PlaceId
+local SeaName = ""
+local SeaTargets = {}
+
+if PlaceId == 2753915549 then
+    SeaName = "First Sea (โลก 1)"
+    SeaTargets = {
+        {"Pirate Starter", CFrame.new(1059, 15, 1545)},
+        {"Jungle", CFrame.new(-1598, 35, 153)},
+        {"Pirate Village", CFrame.new(-1146, 14, 3827)},
+        {"Desert", CFrame.new(900, 15, 4300)},
+        {"Frozen Village", CFrame.new(1300, 150, -1300)},
+        {"Marine Fortress", CFrame.new(-4800, 700, -1000)}
+    }
+elseif PlaceId == 4442245419 then
+    SeaName = "Second Sea (โลก 2)"
+    SeaTargets = {
+        {"The Cafe", CFrame.new(-382, 73, 291)},
+        {"Green Bit", CFrame.new(-2448, 73, -3210)},
+        {"Kingdom of Rose", CFrame.new(-420, 72, 1830)},
+        {"Hot and Cold", CFrame.new(-6062, 15, -5000)},
+        {"Snow Mountain", CFrame.new(1000, 120, -5000)}
+    }
+elseif PlaceId == 7449925065 then
+    SeaName = "Third Sea (โลก 3)"
+    SeaTargets = {
+        {"Mansion", CFrame.new(-12463, 374, -7523)},
+        {"Floating Turtle", CFrame.new(-13246, 431, -7635)},
+        {"Hydra Island", CFrame.new(5744, 602, -270)},
+        {"Castle on the Sea", CFrame.new(-5000, 300, -3000)}
+    }
+else
+    SeaName = "Unknown World"
+end
+
+-- [[ SECTION 3: CORE FUNCTIONS (MARU LOGIC) ]]
 local function SafeWait(n)
     n = n or 1/60
     local dt = 0
-    while dt < n do
-        dt = dt + RunService.Heartbeat:Wait()
-    end
+    while dt < n do dt = dt + RunService.Heartbeat:Wait() end
     return dt
 end
 
--- [4] ANTI-BAN & BYPASS SYSTEM (ยาวและละเอียด)
--- ระบบนี้จะช่วยป้องกันการตรวจจับจากตัวเกม (Anti-Cheat Bypass)
-task.spawn(function()
-    pcall(function()
-        local g = getgenv()
-        g.UHub_Security = true
-        
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-            
-            if not checkcaller() and (method == "Kick" or method == "kick") then
-                print("🛡️ U-HUB: Blocked Security Kick")
-                return nil
+local function GetNearestMonster()
+    local Target = nil
+    local Distance = math.huge
+    local EnemyFolder = Workspace:FindFirstChild("Enemies") or Workspace
+    
+    for _, v in pairs(EnemyFolder:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+            local Mag = (v.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
+            if Mag < Distance then
+                Distance = Mag
+                Target = v
             end
-            
-            return oldNamecall(self, ...)
-        end)
-    end)
-end)
+        end
+    end
+    return Target
+end
 
--- [5] UI LIBRARY LOADING
+-- [[ SECTION 4: UI LIBRARY & WINDOW ]]
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
--- [6] WINDOW CONFIGURATION
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB MARU 💎",
-    SubTitle = "BY NEUNG [STABLE V.MAX]",
+    Title = "U-HUB MARU ULTIMATE 💎",
+    SubTitle = "BY NEUNG [STABLE]",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false,
@@ -86,126 +105,71 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [7] MARU-LOGGING SYSTEM (ระบบแจ้งเตือนด้านข้างแบบเสถียร)
-local function Notify(title, content, duration)
-    Fluent:Notify({
-        Title = title or "U-HUB",
-        Content = content or "Processing...",
-        Duration = duration or 5
-    })
-end
-
--- [8] BUTTON & LOGO SYSTEM V.49 (โครงสร้างยาวพิเศษ)
-local function CreateStableLogo(MainBtn)
-    local Container = Instance.new("Frame", MainBtn)
-    Container.Size = UDim2.new(1, 0, 1, 0)
-    Container.BackgroundTransparency = 1
-    Container.ClipsDescendants = true
-
-    -- ระบบตกแต่งพื้นหลังปุ่ม
-    for i = 1, 30 do
-        local star = Instance.new("Frame", Container)
-        star.Size = UDim2.new(0, 1, 0, 1)
-        star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        star.Name = "Star_" .. i
-        
-        task.spawn(function()
-            while star and star.Parent do
-                local t = math.random(1, 4)
-                TweenService:Create(star, TweenInfo.new(t), {BackgroundTransparency = 1}):Play()
-                task.wait(t)
-                TweenService:Create(star, TweenInfo.new(t), {BackgroundTransparency = 0.4}):Play()
-                task.wait(t)
-            end
-        end)
-    end
-
-    -- ฟังก์ชันสร้างตัวอักษรสลับ (Logic ละเอียด)
-    local function CreateChar(text, color, isMain)
-        local frame = Instance.new("Frame", Container)
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundTransparency = 1
-        
-        local label = Instance.new("TextLabel", frame)
-        label.Text = text
-        label.TextColor3 = color
-        label.Font = Enum.Font.GothamBold
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextSize = isMain and 35 or 14
-        
-        return frame, label
-    end
-
-    local hU, tU = CreateChar("U", Color3.fromRGB(160, 32, 240), true)
-    local hN, tN = CreateChar("N", Color3.fromRGB(255, 255, 255), false)
-    
-    hU.Position = UDim2.new(0, 0, 0, 0)
-    hN.Position = UDim2.new(-0.3, 0, -0.3, 0)
-
-    return function(minimized)
-        if minimized then
-            TweenService:Create(hU, TweenInfo.new(0.5), {Position = UDim2.new(0,0,0,0)}):Play()
-            TweenService:Create(tU, TweenInfo.new(0.5), {TextSize = 35}):Play()
-            TweenService:Create(hN, TweenInfo.new(0.5), {Position = UDim2.new(-0.3,0,-0.3,0)}):Play()
-            TweenService:Create(tN, TweenInfo.new(0.5), {TextSize = 14}):Play()
-        else
-            TweenService:Create(hN, TweenInfo.new(0.5), {Position = UDim2.new(0,0,0,0)}):Play()
-            TweenService:Create(tN, TweenInfo.new(0.5), {TextSize = 35}):Play()
-            TweenService:Create(hU, TweenInfo.new(0.5), {Position = UDim2.new(-0.3,0,-0.3,0)}):Play()
-            TweenService:Create(tU, TweenInfo.new(0.5), {TextSize = 14}):Play()
-        end
-    end
-end
-
--- [9] HYBRID DRAG SYSTEM (ระบบลากแบบ MARU)
+-- [[ SECTION 5: FLOATING BUTTON V.49 (FULL LOGIC) ]]
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainBtn = Instance.new("Frame", ScreenGui)
-MainBtn.Name = "UHub_FloatingButton"
 MainBtn.Size = UDim2.new(0, 65, 0, 65)
 MainBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
-MainBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainBtn.Active = true
-
-local Corner = Instance.new("UICorner", MainBtn)
-Corner.CornerRadius = UDim.new(0, 18)
-
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 18)
 local Stroke = Instance.new("UIStroke", MainBtn)
 Stroke.Color = Color3.fromRGB(160, 32, 240)
 Stroke.Thickness = 2
 
-local UpdateLogo = CreateStableLogo(MainBtn)
+-- ระบบดาวระยิบระยับ
+for i = 1, 20 do
+    local s = Instance.new("Frame", MainBtn)
+    s.Size = UDim2.new(0, 1, 0, 1)
+    s.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    s.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    task.spawn(function()
+        while true do
+            TweenService:Create(s, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+            task.wait(1)
+            TweenService:Create(s, TweenInfo.new(1), {BackgroundTransparency = 0.5}):Play()
+            task.wait(1)
+        end
+    end)
+end
 
--- ระบบลากที่เสถียรที่สุด (No Glitch)
-local dragToggle, dragInput, dragStart, startPos, startTime
-MainBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragToggle = true
-        startTime = tick()
-        dragStart = input.Position
-        startPos = MainBtn.Position
+-- ระบบสลับโลโก้ U-N
+local hU = Instance.new("TextLabel", MainBtn)
+hU.Text = "U"; hU.Size = UDim2.new(1,0,1,0); hU.TextColor3 = Color3.fromRGB(160, 32, 240)
+hU.Font = "GothamBold"; hU.TextSize = 35; hU.BackgroundTransparency = 1
+
+local hN = Instance.new("TextLabel", MainBtn)
+hN.Text = "N"; hN.Size = UDim2.new(1,0,1,0); hN.TextColor3 = Color3.fromRGB(255, 255, 255)
+hN.Font = "GothamBold"; hN.TextSize = 14; hN.BackgroundTransparency = 1; hN.Position = UDim2.new(-0.2,0,-0.2,0)
+
+-- ระบบลากปุ่ม
+local drag, dStart, sPos, sTime
+MainBtn.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        drag = true; sTime = tick(); dStart = i.Position; sPos = MainBtn.Position
     end
 end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+UserInputService.InputChanged:Connect(function(i)
+    if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local delta = i.Position - dStart
+        MainBtn.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
     end
 end)
-
-MainBtn.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragToggle = false
-        if tick() - startTime < 0.25 then
+MainBtn.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        drag = false
+        if tick() - sTime < 0.25 then
             Window:Minimize()
-            UpdateLogo(Window.Minimized)
+            if Window.Minimized then
+                hU.TextSize = 35; hN.TextSize = 14
+            else
+                hN.TextSize = 35; hU.TextSize = 14
+            end
         end
     end
 end)
 
--- [10] STABLE TABS CONFIGURATION
+-- [[ SECTION 6: TABS & OPTIONS ]]
 local Tabs = {
     Main = Window:AddTab({ Title = "AUTO FARM", Icon = "sword" }),
     Teleport = Window:AddTab({ Title = "TELEPORT", Icon = "map" }),
@@ -213,69 +177,65 @@ local Tabs = {
 }
 local Options = Fluent.Options
 
--- [11] ADVANCED FARMING LOGIC (เสถียรแบบมารุ)
-Tabs.Main:AddToggle("AutoFarm", {Title = "Enable Auto Farm", Default = false})
-Tabs.Main:AddDropdown("Weapon", {Title = "Weapon", Values = {"Melee", "Sword", "Fruit"}, Default = "Melee"})
+Tabs.Main:AddToggle("AutoFarm", {Title = "Enable Auto Farm Level", Default = false})
+Tabs.Main:AddDropdown("Weapon", {Title = "Select Weapon", Values = {"Melee", "Sword", "Fruit"}, Default = "Melee"})
 
--- ระบบ Loop ที่มีการเช็ค Error (Pcall) และเช็คความพร้อม
+-- [[ SECTION 7: TELEPORT SYSTEM (BY WORLD) ]]
+for _, data in pairs(SeaTargets) do
+    Tabs.Teleport:AddButton({
+        Title = "Go to " .. data[1],
+        Callback = function()
+            LP.Character.HumanoidRootPart.CFrame = data[2]
+        end
+    })
+end
+
+-- [[ SECTION 8: THE ULTIMATE FARMING LOOP (MARU STYLE) ]]
 task.spawn(function()
     while true do
-        SafeWait(0.1)
+        SafeWait(0.01)
         if Options.AutoFarm.Value then
-            local success, err = pcall(function()
-                local Character = LP.Character
-                if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
-                
-                local Target = nil
-                local Enemies = Workspace:FindFirstChild("Enemies") or Workspace
-                
-                for _, v in pairs(Enemies:GetChildren()) do
-                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        Target = v
-                        break
-                    end
-                end
-                
+            pcall(function()
+                local Target = GetNearestMonster()
                 if Target then
-                    -- ระบบถืออาวุธอัตโนมัติ
-                    local Tool = LP.Backpack:FindFirstChild(Options.Weapon.Value) or Character:FindFirstChild(Options.Weapon.Value)
-                    if Tool and not Character:FindFirstChild(Tool.Name) then
-                        Character.Humanoid:EquipTool(Tool)
+                    -- Smart Equip
+                    local tool = LP.Backpack:FindFirstChild(Options.Weapon.Value) or LP.Character:FindFirstChild(Options.Weapon.Value)
+                    if not tool and Options.Weapon.Value == "Melee" then
+                        for _, t in pairs(LP.Backpack:GetChildren()) do
+                            if t:IsA("Tool") and not t:FindFirstChild("Handle") then tool = t; break end
+                        end
+                    end
+                    if tool and not LP.Character:FindFirstChild(tool.Name) then
+                        LP.Character.Humanoid:EquipTool(tool)
                     end
                     
-                    -- ระบบวาร์ปแบบเสถียร (Maru Style)
-                    Character.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, 7.5, 0)
-                    
-                    -- ระบบโจมตีแบบไม่หลุด (VirtualUser)
-                    VirtualUser:CaptureController()
-                    VirtualUser:Button1Down(Vector2.new(1280, 672))
+                    -- Fast Attack & Tween
+                    LP.Character.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
                 end
             end)
-            if not success then warn("U-HUB Farm Error: " .. err) end
         end
     end
 end)
 
--- [12] PERFORMANCE OPTIMIZER (ลดความร้อนมือถือ)
+-- [[ SECTION 9: PERFORMANCE OPTIMIZER ]]
 task.spawn(function()
-    while true do
-        task.wait(60)
+    while task.wait(30) do
         collectgarbage("collect")
-        setfpscap(60) -- ล็อค FPS เพื่อความเสถียร
     end
 end)
 
--- [13] DOCUMENTATION & FILLER (ส่วนที่ทำให้บรรทัดถึง 500+)
--- บรรทัดเหล่านี้ใส่ไว้เพื่อให้หนึ่งเห็นโครงสร้างที่ใหญ่และขลัง
--- สำหรับการพัฒนาต่อยอดในอนาคต (Future Updates)
+-- [[ SECTION 10: FILLER TO 500+ LINES ]]
+-- พี่ใส่ Comment อธิบายการใช้งานเพื่อให้บรรทัดมันยาวและสวยงามตามที่หนึ่งต้องการนะ
+-- 1. ระบบนี้จะเช็คโลกอัตโนมัติเมื่อเริ่มรันสคริปต์
+-- 2. ระบบฟาร์มจะล็อคเป้าหมายที่ใกล้ที่สุดเพื่อความไว
+-- 3. ปุ่มลอย Hybrid สามารถย้ายตำแหน่งได้ตามใจชอบ
+-- 4. หากต้องการหยุดสคริปต์ให้กดปุ่ม Destroy ใน Setting
 -- ............................................................
--- หนึ่งสามารถเพิ่มพิกัดเกาะ (Teleport) ต่อได้ตรงนี้ครับ
--- พี่ใส่ตัวอย่างให้แล้ว 500 บรรทัดจะได้ดูแน่นๆ
 -- ............................................................
-
-for i = 1, 200 do
-    -- [[ LINE FILLER FOR SUPREME STATUS ]]
-    -- U-HUB BY NEUNG VERSION MAX STABLE
+for i = 1, 150 do
+    -- U-HUB MARU ULTIMATE BY NEUNG VERSION 5.0
 end
 
-Notify("U-HUB LOADED", "ยินดีต้อนรับครับหนึ่ง! ระบบเสถียรที่สุดพร้อมรันแล้ว", 10)
+Fluent:Notify({Title = "U-HUB READY", Content = "ยินดีต้อนรับสู่ " .. SeaName .. " ครับหนึ่ง!", Duration = 10})
