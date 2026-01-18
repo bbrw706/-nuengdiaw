@@ -2,152 +2,56 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung",
+    SubTitle = "BY Neung | Mobile Premium",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, -- ปิดความโปร่งแสงเพื่อลดอาการบัคจอ
+    Acrylic = false, 
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ ปุ่มเปิด/ปิดสำหรับมือถือ ]]
+-- [[ ปุ่มเปิด/ปิดดีไซน์ใหม่ (ตัว U สีฟ้า + N เอียงหลัง) ]]
 local ScreenGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("TextButton")
-ScreenGui.Name = "UHubToggle"
+local MainButton = Instance.new("Frame")
+local TextU = Instance.new("TextLabel")
+local TextN = Instance.new("TextLabel")
+local UICorner = Instance.new("UICorner")
+local UIGradient = Instance.new("UIGradient")
+local ClickBtn = Instance.new("TextButton")
+
+ScreenGui.Name = "UHubMobileToggle"
 ScreenGui.Parent = game.CoreGui
-ToggleButton.Parent = ScreenGui
-ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ToggleButton.Position = UDim2.new(0.1, 0, 0.15, 0)
-ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-ToggleButton.Text = "U"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 24
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 10)
-Corner.Parent = ToggleButton
-ToggleButton.MouseButton1Click:Connect(function() Window:Minimize() end)
 
--- [ ตัวแปรหลัก - ตั้งค่าเริ่มต้น ]
-_G.AutoFarm = false
-_G.SelectWeapon = "Melee"
-_G.FarmMethod = "Above (บนหัว)" 
-_G.FarmDistance = 10 
+MainButton.Name = "MainButton"
+MainButton.Parent = ScreenGui
+MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.Position = UDim2.new(0.1, 0, 0.15, 0)
+MainButton.Size = UDim2.new(0, 65, 0, 65)
+MainButton.BorderSizePixel = 0
 
--- [ Tabs ]
-local Tabs = {
-    Main = Window:AddTab({ Title = "General", Icon = "home" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40))
 }
+UIGradient.Rotation = 45
+UIGradient.Parent = MainButton
 
--- [ หน้า General ]
-local FarmToggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
-FarmToggle:OnChanged(function(Value)
-    _G.AutoFarm = Value
-end)
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainButton
 
-Tabs.Main:AddDropdown("FarmMethod", {
-    Title = "รูปแบบการบินตี",
-    Values = {"Above (บนหัว)", "Below (ใต้ดิน)", "Orbit (บินวน)", "Fast Warp (วาร์ปรอบตัว)"},
-    Default = 1,
-    Callback = function(Value) _G.FarmMethod = Value end
-})
+-- ตัว N เอียงหลัง (สีฟ้าคราม)
+TextN.Parent = MainButton
+TextN.BackgroundTransparency = 1
+TextN.Size = UDim2.new(1, 0, 1, 0)
+TextN.Text = "N"
+TextN.TextColor3 = Color3.fromRGB(0, 150, 255) 
+TextN.TextSize = 48
+TextN.Font = Enum.Font.GothamBold
+TextN.Rotation = 20
+TextN.ZIndex = 1
+TextN.TextTransparency = 0.4
 
-local DistanceSlider = Tabs.Main:AddSlider("Distance", {
-    Title = "ปรับระยะความสูง/ห่าง",
-    Default = 10,
-    Min = 5,
-    Max = 30,
-    Rounding = 0,
-    Callback = function(Value)
-        _G.FarmDistance = Value
-    end
-})
-
--- [ หน้า Settings ]
-Tabs.Settings:AddDropdown("Weapon", {
-    Title = "Select Weapon",
-    Values = {"Melee", "Sword", "Fruit"},
-    Default = 1,
-    Callback = function(Value) _G.SelectWeapon = Value end
-})
-
--- [[ ระบบถืออาวุธ & ตีรัว (แก้บัคใหม่) ]]
-task.spawn(function()
-    while task.wait() do
-        if _G.AutoFarm then
-            pcall(function()
-                local lp = game.Players.LocalPlayer
-                local char = lp.Character
-                local tool = char:FindFirstChildOfClass("Tool") or lp.Backpack:FindFirstChild(_G.SelectWeapon)
-                
-                -- บังคับถือของ
-                if tool and tool.Parent ~= char then
-                    char.Humanoid:EquipTool(tool)
-                end
-                
-                -- บังคับตี (ส่งสัญญาณตรงไปที่ Tool)
-                if char:FindFirstChildOfClass("Tool") then
-                    game:GetService("VirtualUser"):CaptureController()
-                    game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
-                    char:FindFirstChildOfClass("Tool"):Activate()
-                end
-            end)
-        end
-    end
-end)
-
--- [[ ระบบบินฟาร์ม (แก้บัคตัวละครค้าง) ]]
-task.spawn(function()
-    local Angle = 0
-    while task.wait() do
-        if _G.AutoFarm then
-            pcall(function()
-                local lp = game.Players.LocalPlayer
-                local char = lp.Character
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                
-                if not lp.PlayerGui.Main.Quest.Visible then
-                    hrp.CFrame = CFrame.new(1059, 15, 1549)
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
-                else
-                    local Enemy = workspace.Enemies:FindFirstChild("Bandit")
-                    if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
-                        local EnemyHRP = Enemy.HumanoidRootPart
-                        local FinalCFrame
-                        
-                        -- คำนวณตำแหน่งตาม Slider และรูปแบบ
-                        if _G.FarmMethod == "Above (บนหัว)" then
-                            FinalCFrame = EnemyHRP.CFrame * CFrame.new(0, _G.FarmDistance, 0)
-                        elseif _G.FarmMethod == "Below (ใต้ดิน)" then
-                            FinalCFrame = EnemyHRP.CFrame * CFrame.new(0, -_G.FarmDistance, 0)
-                        elseif _G.FarmMethod == "Orbit (บินวน)" then
-                            Angle = Angle + 0.1
-                            FinalCFrame = EnemyHRP.CFrame * CFrame.Angles(0, Angle, 0) * CFrame.new(0, _G.FarmDistance, 5)
-                        elseif _G.FarmMethod == "Fast Warp (วาร์ปรอบตัว)" then
-                            FinalCFrame = EnemyHRP.CFrame * CFrame.new(math.random(-5,5), _G.FarmDistance, math.random(-5,5))
-                        end
-                        
-                        -- บินไปที่จุดหมายและหันหน้าหาศัตรู
-                        hrp.CFrame = CFrame.lookAt(FinalCFrame.Position, EnemyHRP.Position)
-                    else
-                        hrp.CFrame = CFrame.new(1145, 20, 1630) -- กลับจุดเกิดแบบลอยเหนือพื้นนิดหน่อยกันบัค
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ระบบกันตาย (Anti-Fall/Void)
-task.spawn(function()
-    while task.wait(1) do
-        if _G.AutoFarm then
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.PlatformStand = true -- กันตัวละครล้มเวลาวาร์ป
-            end
-        end
-    end
-end)
-
-Fluent:Notify({Title = "U-HUB V.6 Mega Fix", Content = "แก้บัคถือของ ตีรัว และ Slider แล้ว!", Duration = 5})
+-- ตัว U หน้า (สีขาวเรืองแสง)
+TextU.Parent = MainButton
+TextU.BackgroundTransparency = 1
+TextU.Size = UDim2.new(1, 0, 1,
