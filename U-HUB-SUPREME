@@ -1,93 +1,77 @@
--- [[ 🛡️ U-HUB ALL-IN-ONE SUPREME ]]
-pcall(function()
-    for _, v in pairs(game.CoreGui:GetChildren()) do
-        if v.Name == "U_HUB_FINAL" or v.Name == "Fluent" then v:Destroy() end
-    end
-end)
-
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+-- [[ 🛡️ U-HUB SUPREME FINAL (ONE-PIECE CODE) ]]
 local LP = game.Players.LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local RigEvent = RS:WaitForChild("RigControllerEvent")
 
--- [[ 🎨 UI SETUP ]]
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Theme = "Dark"
-})
+-- [[ 🎨 สร้าง UI แบบ Custom (ไม่ต้องโหลดเว็บ) ]]
+pcall(function() if game.CoreGui:FindFirstChild("U_HUB_NEUNG") then game.CoreGui.U_HUB_NEUNG:Destroy() end end)
+local SG = Instance.new("ScreenGui", game.CoreGui); SG.Name = "U_HUB_NEUNG"
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Auto Farm", Icon = "sword" }),
-    Stats = Window:AddTab({ Title = "Stats", Icon = "bar-chart" })
-}
+local Main = Instance.new("Frame", SG)
+Main.Size = UDim2.new(0, 250, 0, 300); Main.Position = UDim2.new(0.5, -125, 0.5, -150)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Main.Active = true; Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
 
--- [[ ⚙️ CONFIG & VARIABLES ]]
-local Options = Fluent.Options
-local Distance = 15 -- ความสูงเริ่มต้น
+local Title = Instance.new("TextLabel", Main)
+Title.Text = "U-HUB SUPREME 💎"; Title.Size = UDim2.new(1, 0, 0, 50)
+Title.TextColor3 = Color3.fromRGB(0, 170, 255); Title.BackgroundTransparency = 1; Title.TextSize = 20
 
--- [[ ⚔️ MARU FAST ATTACK ]]
-local function MaruAttack()
-    local Tool = LP.Character:FindFirstChildOfClass("Tool")
-    if Tool then
-        RigEvent:FireServer("Attack")
-        if LP.Character:FindFirstChild("Animate") then
-            LP.Character.Animate.Disabled = true
-        end
-    end
-end
+-- [[ 🔘 ปุ่มเปิดฟาร์ม ]]
+local FarmBtn = Instance.new("TextButton", Main)
+FarmBtn.Text = "START AUTO FARM"; FarmBtn.Size = UDim2.new(0.8, 0, 0, 50); FarmBtn.Position = UDim2.new(0.1, 0, 0.25, 0)
+FarmBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", FarmBtn).CornerRadius = UDim.new(0, 10)
 
--- [[ 📋 AUTO QUEST SELECTOR (1-MAX) ]]
-function GetMyQuest()
-    local lv = LP.Data.Level.Value
-    if lv < 10 then
-        return "BanditQuest1", 1, "Bandit", Vector3.new(1059, 15, 1549)
-    elseif lv >= 10 and lv < 15 then
-        return "MonkeyQuest1", 1, "Monkey", Vector3.new(-1598, 36, 153)
-    -- เพิ่มเงื่อนไขเกาะอื่นๆ ได้ที่นี่
-    else
-        -- ค่าเริ่มต้นเกาะขนม (Level 2800)
-        return "CandyQuest", 1, "Candy Rebel", Vector3.new(-1147, 13, -14510)
-    end
-end
+-- [[ 🔘 ปุ่มอัพ Stats (อัพ Melee เป็นหลัก) ]]
+local StatBtn = Instance.new("TextButton", Main)
+StatBtn.Text = "AUTO STATS: OFF"; StatBtn.Size = UDim2.new(0.8, 0, 0, 50); StatBtn.Position = UDim2.new(0.1, 0, 0.5, 0)
+StatBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); StatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", StatBtn).CornerRadius = UDim.new(0, 10)
 
--- [[ 🚀 MAIN FARM LOOP ]]
-Tabs.Main:AddToggle("LevelFarm", {Title = "Auto Farm 1-MAX", Default = false})
+-- [[ 📋 ระบบการทำงาน ]]
+_G.Farm = false
+_G.Stats = false
 
+FarmBtn.MouseButton1Click:Connect(function()
+    _G.Farm = not _G.Farm
+    FarmBtn.Text = _G.Farm and "FARMING... (ON)" or "START AUTO FARM"
+    FarmBtn.BackgroundColor3 = _G.Farm and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(40, 40, 40)
+end)
+
+StatBtn.MouseButton1Click:Connect(function()
+    _G.Stats = not _G.Stats
+    StatBtn.Text = _G.Stats and "AUTO STATS: ON" or "AUTO STATS: OFF"
+    StatBtn.BackgroundColor3 = _G.Stats and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(40, 40, 40)
+end)
+
+-- [[ 🚀 ระบบฟาร์ม & โจมตี ]]
 task.spawn(function()
-    while true do task.wait()
-        if Options.LevelFarm.Value then
+    while true do task.wait(0.1)
+        if _G.Farm then
             pcall(function()
-                local qName, qID, mName, npcPos = GetMyQuest()
-                
+                -- 1. เช็คเควส (เกาะขนม Candy Rebel)
                 if not LP.PlayerGui.Main.Quest.Visible then
-                    -- บินไปรับเควส
-                    LP.Character.HumanoidRootPart.CFrame = CFrame.new(npcPos)
+                    LP.Character.HumanoidRootPart.CFrame = CFrame.new(-1147, 13, -14510) -- NPC
                     task.wait(0.5)
-                    RS.Remotes.CommF_:InvokeServer("StartQuest", qName, qID)
+                    RS.Remotes.CommF_:InvokeServer("StartQuest", "CandyQuest", 1)
                 else
-                    -- บินไปฟาร์ม
-                    local Enemy = workspace.Enemies:FindFirstChild(mName) or workspace.Enemies:FindFirstChild(mName:sub(1,-2))
+                    -- 2. หามอนสเตอร์
+                    local Enemy = workspace.Enemies:FindFirstChild("Candy Rebel")
                     if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
-                        -- ล็อคตำแหน่งสูง 15 และหันหน้าเข้ามอน
-                        LP.Character.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, Distance, 0)
+                        -- บินสูง 15 และหันหน้าเข้ามอน
+                        LP.Character.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 15, 0)
                         LP.Character.HumanoidRootPart.CFrame = CFrame.new(LP.Character.HumanoidRootPart.Position, Enemy.HumanoidRootPart.Position)
+
+                        -- ถืออาวุธและยิงดาเมจ (Maru Attack)
+                        local Tool = LP.Backpack:FindFirstChildOfClass("Tool") or LP.Character:FindFirstChildOfClass("Tool")
+                        if Tool and Tool.Parent ~= LP.Character then LP.Character.Humanoid:EquipTool(Tool) end
                         
-                        -- ถือหมัดออโต้
-                        if not LP.Character:FindFirstChildOfClass("Tool") then
-                            local Tool = LP.Backpack:FindFirstChildOfClass("Tool")
-                            if Tool then LP.Character.Humanoid:EquipTool(Tool) end
-                        end
-                        
-                        MaruAttack()
+                        RigEvent:FireServer("Attack")
+                        if LP.Character:FindFirstChild("Animate") then LP.Character.Animate.Disabled = true end
                     else
-                        -- รอมอนเกิด
-                        local Spawn = workspace._WorldOrigin.EnemySpawns:FindFirstChild(mName)
-                        if Spawn then
-                            LP.Character.HumanoidRootPart.CFrame = Spawn.CFrame * CFrame.new(0, 30, 0)
-                        end
+                        -- รอมอนสปาวน์
+                        local Spawn = workspace._WorldOrigin.EnemySpawns:FindFirstChild("Candy Rebel")
+                        if Spawn then LP.Character.HumanoidRootPart.CFrame = Spawn.CFrame * CFrame.new(0, 30, 0) end
                     end
                 end
             end)
@@ -95,39 +79,21 @@ task.spawn(function()
     end
 end)
 
--- [[ 📊 AUTO STATS ]]
-Tabs.Stats:AddDropdown("StatSelect", {Title = "Select Stat", Values = {"Melee", "Defense", "Sword", "Gun", "Demon Fruit"}, Default = "Melee"})
-Tabs.Stats:AddSlider("StatAmount", {Title = "Max Points", Default = 2550, Min = 1, Max = 2550, Rounding = 0})
-Tabs.Stats:AddToggle("AutoStats", {Title = "Start Auto Stats", Default = false})
-
+-- [[ 📊 ระบบอัพ Stats ออโต้ ]]
 task.spawn(function()
     while true do task.wait(1)
-        if Options.AutoStats.Value then
-            pcall(function()
-                local Stat = Options.StatSelect.Value
-                if LP.Data.Stats[Stat].Level.Value < Options.StatAmount.Value and LP.Data.StatsPoints.Value > 0 then
-                    RS.Remotes.CommF_:InvokeServer("AddPoint", Stat, 3)
-                end
-            end)
+        if _G.Stats and LP.Data.StatsPoints.Value > 0 then
+            RS.Remotes.CommF_:InvokeServer("AddPoint", "Melee", 3)
         end
     end
 end)
 
--- [[ 🛡️ SAFETY SYSTEM ]]
+-- [[ 🛡️ SAFETY: NoClip ]]
 game:GetService("RunService").Stepped:Connect(function()
-    if Options.LevelFarm.Value and LP.Character then
+    if _G.Farm and LP.Character then
         for _, v in pairs(LP.Character:GetChildren()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
         LP.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
     end
 end)
-
--- ปุ่มลอย N/U (สวยๆ)
-local SG = Instance.new("ScreenGui", game.CoreGui); SG.Name = "U_HUB_FINAL"
-local MainBtn = Instance.new("TextButton", SG)
-MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0); MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Text = "N/U"; MainBtn.TextColor3 = Color3.fromRGB(0, 170, 255); MainBtn.Draggable = true
-Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 15)
-MainBtn.MouseButton1Click:Connect(function() Window:Minimize() end)
-
-Fluent:Notify({Title = "U-HUB Loaded", Content = "ยินดีต้อนรับครับหนึ่ง!", Duration = 5})
