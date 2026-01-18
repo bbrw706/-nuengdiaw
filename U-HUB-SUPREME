@@ -1,8 +1,9 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
+-- [[ สร้างหน้าต่างพร้อมโลโก้จิ๋วข้างชื่อ ]]
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung | Mobile Premium",
+    Title = "U-HUB SUPREME 💎", -- เดี๋ยวเราจะใช้โค้ดด้านล่างแทรกโลโก้เข้าไป
+    SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
@@ -10,48 +11,112 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ ปุ่มเปิด/ปิดดีไซน์ใหม่ (ตัว U สีฟ้า + N เอียงหลัง) ]]
+-- [[ โค้ดสำหรับแทรกโลโก้ U-N จิ๋วไปไว้ข้างชื่อสคริปต์ ]]
+local function InsertMiniLogo()
+    pcall(function()
+        local TitleLabel = game.CoreGui:FindFirstChild("Fluent", true):FindFirstChild("Title", true)
+        if TitleLabel and TitleLabel:IsA("TextLabel") then
+            -- สร้างเฟรมโลโก้จิ๋ว
+            local MiniLogo = Instance.new("Frame")
+            MiniLogo.Name = "MiniLogo"
+            MiniLogo.Parent = TitleLabel
+            MiniLogo.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            MiniLogo.Position = UDim2.new(0, -35, 0.5, -12) -- วางไว้ข้างหน้าชื่อ
+            MiniLogo.Size = UDim2.new(0, 25, 0, 25) -- ขนาดเล็กลงตามสั่ง
+            MiniLogo.BorderSizePixel = 0
+            
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 5)
+            Corner.Parent = MiniLogo
+            
+            local LogN = Instance.new("TextLabel")
+            LogN.Parent = MiniLogo
+            LogN.Size = UDim2.new(1, 0, 1, 0)
+            LogN.Text = "N"
+            LogN.TextColor3 = Color3.fromRGB(0, 120, 255)
+            LogN.TextSize = 18
+            LogN.Font = Enum.Font.GothamBold
+            LogN.Rotation = 15
+            LogN.BackgroundTransparency = 1
+            
+            local LogU = Instance.new("TextLabel")
+            LogU.Parent = MiniLogo
+            LogU.Size = UDim2.new(1, 0, 1, 0)
+            LogU.Text = "U"
+            LogU.TextColor3 = Color3.fromRGB(255, 255, 255)
+            LogU.TextSize = 14
+            LogU.Font = Enum.Font.GothamBold
+            LogU.BackgroundTransparency = 1
+        end
+    end)
+end
+task.spawn(InsertMiniLogo)
+
+-- [[ ปุ่มเปิด/ปิดสำหรับมือถือ (ตัว U สีฟ้า + N เอียงหลัง) ]]
 local ScreenGui = Instance.new("ScreenGui")
 local MainButton = Instance.new("Frame")
-local TextU = Instance.new("TextLabel")
-local TextN = Instance.new("TextLabel")
-local UICorner = Instance.new("UICorner")
-local UIGradient = Instance.new("UIGradient")
-local ClickBtn = Instance.new("TextButton")
-
-ScreenGui.Name = "UHubMobileToggle"
+ScreenGui.Name = "UHubToggle"
 ScreenGui.Parent = game.CoreGui
-
-MainButton.Name = "MainButton"
 MainButton.Parent = ScreenGui
-MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainButton.Position = UDim2.new(0.1, 0, 0.15, 0)
-MainButton.Size = UDim2.new(0, 65, 0, 65)
-MainButton.BorderSizePixel = 0
-
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40))
-}
-UIGradient.Rotation = 45
-UIGradient.Parent = MainButton
-
-UICorner.CornerRadius = UDim.new(0, 15)
+MainButton.Size = UDim2.new(0, 60, 0, 60)
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
 UICorner.Parent = MainButton
 
--- ตัว N เอียงหลัง (สีฟ้าคราม)
+local TextN = Instance.new("TextLabel")
 TextN.Parent = MainButton
+TextN.Text = "N"
+TextN.TextColor3 = Color3.fromRGB(0, 120, 255)
+TextN.TextSize = 45
+TextN.Font = Enum.Font.GothamBold
+TextN.Rotation = 15
 TextN.BackgroundTransparency = 1
 TextN.Size = UDim2.new(1, 0, 1, 0)
-TextN.Text = "N"
-TextN.TextColor3 = Color3.fromRGB(0, 150, 255) 
-TextN.TextSize = 48
-TextN.Font = Enum.Font.GothamBold
-TextN.Rotation = 20
-TextN.ZIndex = 1
-TextN.TextTransparency = 0.4
 
--- ตัว U หน้า (สีขาวเรืองแสง)
+local TextU = Instance.new("TextLabel")
 TextU.Parent = MainButton
+TextU.Text = "U"
+TextU.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextU.TextSize = 35
+TextU.Font = Enum.Font.GothamBold
 TextU.BackgroundTransparency = 1
-TextU.Size = UDim2.new(1, 0, 1,
+TextU.Size = UDim2.new(1, 0, 1, 0)
+
+local ClickBtn = Instance.new("TextButton")
+ClickBtn.Parent = MainButton
+ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+ClickBtn.BackgroundTransparency = 1
+ClickBtn.Text = ""
+ClickBtn.MouseButton1Click:Connect(function() Window:Minimize() end)
+
+-- [ ตัวแปรหลัก ]
+_G.AutoFarm = false
+_G.SelectWeapon = "Melee"
+
+-- [ Tabs ]
+local Tabs = {
+    Main = Window:AddTab({ Title = "General", Icon = "home" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false, Callback = function(v) _G.AutoFarm = v end})
+
+-- [[ ระบบถืออาวุธ & ตีรัว ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.AutoFarm then
+            pcall(function()
+                local lp = game.Players.LocalPlayer
+                local tool = lp.Backpack:FindFirstChild(_G.SelectWeapon) or lp.Character:FindFirstChild(_G.SelectWeapon)
+                if tool and tool.Parent ~= lp.Character then lp.Character.Humanoid:EquipTool(tool) end
+                if lp.Character:FindFirstChildOfClass("Tool") then
+                    lp.Character:FindFirstChildOfClass("Tool"):Activate()
+                end
+            end)
+        end
+    end
+end)
+
+Fluent:Notify({Title = "U-HUB V.10", Content = "ติดตั้งโลโก้จิ๋วเรียบร้อยแล้ว!", Duration = 5})
