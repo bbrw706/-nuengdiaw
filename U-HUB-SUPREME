@@ -1,159 +1,133 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local VIM = game:GetService("VirtualInputManager")
-local LP = game.Players.LocalPlayer
-math.randomseed(tick())
+-- [[ 🛡️ U-HUB ALL-IN-ONE SUPREME ]]
+pcall(function()
+    for _, v in pairs(game.CoreGui:GetChildren()) do
+        if v.Name == "U_HUB_FINAL" or v.Name == "Fluent" then v:Destroy() end
+    end
+end)
 
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local LP = game.Players.LocalPlayer
+local RS = game:GetService("ReplicatedStorage")
+local RigEvent = RS:WaitForChild("RigControllerEvent")
+
+-- [[ 🎨 UI SETUP ]]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
     SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, 
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.U 
+    Theme = "Dark"
 })
 
--- [[ 🚀 ระบบลากหน้าต่าง Fluent สำหรับมือถือ ]]
-task.spawn(function()
-    local Gui = game.CoreGui:WaitForChild("Fluent")
-    local MainFrame = Gui:FindFirstChild("Main", true)
-    if MainFrame then
-        local dragging, dragStart, startPos
-        MainFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true; dragStart = input.Position; startPos = MainFrame.Position
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local delta = input.Position - dragStart
-                MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            end
-        end)
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
-        end)
-    end
-end)
+local Tabs = {
+    Main = Window:AddTab({ Title = "Auto Farm", Icon = "sword" }),
+    Stats = Window:AddTab({ Title = "Stats", Icon = "bar-chart" })
+}
 
--- [[ 🎨 ฟังก์ชันจัดการโลโก้สลับตำแหน่ง (U/N Hybrid Drag) ]]
-local function SetupLogoV50(MainBtn)
-    local Container = Instance.new("Frame", MainBtn)
-    Container.Size = UDim2.new(1, 0, 1, 0); Container.BackgroundTransparency = 1; Container.ClipsDescendants = true
-    
-    local function CreateChar(txt, color)
-        local h = Instance.new("Frame", Container); h.Size = UDim2.new(1, 0, 1, 0); h.BackgroundTransparency = 1
-        local l = Instance.new("TextLabel", h); l.Text = txt; l.TextColor3 = color; l.Font = Enum.Font.GothamBold; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1
-        return h, l
-    end
+-- [[ ⚙️ CONFIG & VARIABLES ]]
+local Options = Fluent.Options
+local Distance = 15 -- ความสูงเริ่มต้น
 
-    local holderU, textU = CreateChar("U", Color3.fromRGB(0, 255, 100))
-    local holderN, textN = CreateChar("N", Color3.fromRGB(0, 170, 255))
-    holderU.Position = UDim2.new(0,0,0,0); textU.TextSize = 35
-    holderN.Position = UDim2.new(-1,0,0,0); textN.TextSize = 35 -- ซ่อนไว้ด้านข้างก่อน
-
-    return function(isMinimized)
-        if isMinimized then
-            TweenService:Create(holderU, TweenInfo.new(0.3), {Position = UDim2.new(0,0,0,0)}):Play()
-            TweenService:Create(holderN, TweenInfo.new(0.3), {Position = UDim2.new(-1,0,0,0)}):Play()
-        else
-            TweenService:Create(holderN, TweenInfo.new(0.3), {Position = UDim2.new(0,0,0,0)}):Play()
-            TweenService:Create(holderU, TweenInfo.new(0.3), {Position = UDim2.new(1,0,0,0)}):Play()
+-- [[ ⚔️ MARU FAST ATTACK ]]
+local function MaruAttack()
+    local Tool = LP.Character:FindFirstChildOfClass("Tool")
+    if Tool then
+        RigEvent:FireServer("Attack")
+        if LP.Character:FindFirstChild("Animate") then
+            LP.Character.Animate.Disabled = true
         end
     end
 end
 
--- [[ 🔘 ปุ่มลอยจัดการ Input + Emergency Stop ]]
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainBtn = Instance.new("Frame", ScreenGui)
-MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
-MainBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); MainBtn.Active = true
-Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 12)
-local UpdateLogo = SetupLogoV50(MainBtn)
-
-local dragging, dragStart, startPos, startTime
-MainBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; startTime = tick(); dragStart = input.Position; startPos = MainBtn.Position
+-- [[ 📋 AUTO QUEST SELECTOR (1-MAX) ]]
+function GetMyQuest()
+    local lv = LP.Data.Level.Value
+    if lv < 10 then
+        return "BanditQuest1", 1, "Bandit", Vector3.new(1059, 15, 1549)
+    elseif lv >= 10 and lv < 15 then
+        return "MonkeyQuest1", 1, "Monkey", Vector3.new(-1598, 36, 153)
+    -- เพิ่มเงื่อนไขเกาะอื่นๆ ได้ที่นี่
+    else
+        -- ค่าเริ่มต้นเกาะขนม (Level 2800)
+        return "CandyQuest", 1, "Candy Rebel", Vector3.new(-1147, 13, -14510)
     end
-end)
+end
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        MainBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+-- [[ 🚀 MAIN FARM LOOP ]]
+Tabs.Main:AddToggle("LevelFarm", {Title = "Auto Farm 1-MAX", Default = false})
 
-MainBtn.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-        if tick() - startTime < 0.25 then
-            Window:Minimize()
-            UpdateLogo(Window.Minimized)
+task.spawn(function()
+    while true do task.wait()
+        if Options.LevelFarm.Value then
+            pcall(function()
+                local qName, qID, mName, npcPos = GetMyQuest()
+                
+                if not LP.PlayerGui.Main.Quest.Visible then
+                    -- บินไปรับเควส
+                    LP.Character.HumanoidRootPart.CFrame = CFrame.new(npcPos)
+                    task.wait(0.5)
+                    RS.Remotes.CommF_:InvokeServer("StartQuest", qName, qID)
+                else
+                    -- บินไปฟาร์ม
+                    local Enemy = workspace.Enemies:FindFirstChild(mName) or workspace.Enemies:FindFirstChild(mName:sub(1,-2))
+                    if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
+                        -- ล็อคตำแหน่งสูง 15 และหันหน้าเข้ามอน
+                        LP.Character.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, Distance, 0)
+                        LP.Character.HumanoidRootPart.CFrame = CFrame.new(LP.Character.HumanoidRootPart.Position, Enemy.HumanoidRootPart.Position)
+                        
+                        -- ถือหมัดออโต้
+                        if not LP.Character:FindFirstChildOfClass("Tool") then
+                            local Tool = LP.Backpack:FindFirstChildOfClass("Tool")
+                            if Tool then LP.Character.Humanoid:EquipTool(Tool) end
+                        end
+                        
+                        MaruAttack()
+                    else
+                        -- รอมอนเกิด
+                        local Spawn = workspace._WorldOrigin.EnemySpawns:FindFirstChild(mName)
+                        if Spawn then
+                            LP.Character.HumanoidRootPart.CFrame = Spawn.CFrame * CFrame.new(0, 30, 0)
+                        end
+                    end
+                end
+            end)
         end
     end
 end)
 
--------------------------------------------------------------------------
--- [[ 🌾 ระบบฟาร์มแบบแก้บัค (Maru 100%) ]]
--------------------------------------------------------------------------
+-- [[ 📊 AUTO STATS ]]
+Tabs.Stats:AddDropdown("StatSelect", {Title = "Select Stat", Values = {"Melee", "Defense", "Sword", "Gun", "Demon Fruit"}, Default = "Melee"})
+Tabs.Stats:AddSlider("StatAmount", {Title = "Max Points", Default = 2550, Min = 1, Max = 2550, Rounding = 0})
+Tabs.Stats:AddToggle("AutoStats", {Title = "Start Auto Stats", Default = false})
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "ฟาร์มหลัก", Icon = "sword" }),
-    Settings = Window:AddTab({ Title = "ตั้งค่า", Icon = "settings" })
-}
-
-local Options = Fluent.Options
-Tabs.Main:AddToggle("AutoFarm", {Title = "เปิดระบบฟาร์ม (100% Fast)", Default = false})
-Tabs.Main:AddSlider("Height", {Title = "ระยะสูง", Default = 5, Min = 1, Max = 15, Rounding = 1})
-
--- [[ 🥊 ลูปตีรัว (แก้บัคเมาส์ค้างโดยการเช็ค Focus) ]]
 task.spawn(function()
-    while true do
-        task.wait(0.05) -- ความเร็วที่เสถียรที่สุด
-        if Options.AutoFarm.Value then
+    while true do task.wait(1)
+        if Options.AutoStats.Value then
             pcall(function()
-                local Char = LP.Character
-                local Tool = Char:FindFirstChildOfClass("Tool")
-                if Tool then
-                    Tool:Activate()
-                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                local Stat = Options.StatSelect.Value
+                if LP.Data.Stats[Stat].Level.Value < Options.StatAmount.Value and LP.Data.StatsPoints.Value > 0 then
+                    RS.Remotes.CommF_:InvokeServer("AddPoint", Stat, 3)
                 end
             end)
         end
     end
 end)
 
--- [[ 🚀 ลูปบินวาร์ป ]]
-task.spawn(function()
-    while true do
-        task.wait()
-        if Options.AutoFarm.Value then
-            pcall(function()
-                local Target = nil
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        Target = v; break
-                    end
-                end
-                if Target then
-                    LP.Character.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                    if not LP.Character.HumanoidRootPart:FindFirstChild("Hold") then
-                        local b = Instance.new("BodyVelocity", LP.Character.HumanoidRootPart)
-                        b.Name = "Hold"; b.MaxForce = Vector3.new(9e9,9e9,9e9); b.Velocity = Vector3.new(0,0,0)
-                    end
-                end
-            end)
-        else
-            pcall(function() LP.Character.HumanoidRootPart.Hold:Destroy() end)
+-- [[ 🛡️ SAFETY SYSTEM ]]
+game:GetService("RunService").Stepped:Connect(function()
+    if Options.LevelFarm.Value and LP.Character then
+        for _, v in pairs(LP.Character:GetChildren()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
+        LP.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
     end
 end)
 
-Fluent:Notify({Title = "U-HUB", Content = "ประกอบร่างสมบูรณ์แล้วครับหนึ่ง!", Duration = 5})
+-- ปุ่มลอย N/U (สวยๆ)
+local SG = Instance.new("ScreenGui", game.CoreGui); SG.Name = "U_HUB_FINAL"
+local MainBtn = Instance.new("TextButton", SG)
+MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.1, 0, 0.4, 0); MainBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0); MainBtn.Text = "N/U"; MainBtn.TextColor3 = Color3.fromRGB(0, 170, 255); MainBtn.Draggable = true
+Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(0, 15)
+MainBtn.MouseButton1Click:Connect(function() Window:Minimize() end)
+
+Fluent:Notify({Title = "U-HUB Loaded", Content = "ยินดีต้อนรับครับหนึ่ง!", Duration = 5})
