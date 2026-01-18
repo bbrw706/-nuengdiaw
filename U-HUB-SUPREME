@@ -1,54 +1,156 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME 💎 (MARU STYLE)",
-    SubTitle = "Mobile & PC Premium",
+    Title = "U-HUB SUPREME 💎",
+    SubTitle = "BY Neung",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.U -- ตั้งค่าปุ่ม U สำหรับย่อเมนู
+    MinimizeKey = Enum.KeyCode.U 
 })
+
+-- [[ สร้างปุ่มเปิด/ปิดสำหรับมือถือ ]]
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+
+ScreenGui.Name = "UHubToggle"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ToggleButton.BorderSizePixel = 2
+ToggleButton.Position = UDim2.new(0.1, 0, 0.15, 0) -- ตำแหน่งปุ่มบนจอ
+ToggleButton.Size = UDim2.new(0, 50, 0, 50) -- ขนาดปุ่ม
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "U" -- ตัวหนังสือบนปุ่ม
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 24
+
+-- ทำให้ปุ่มโค้งมน
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 10)
+Corner.Parent = ToggleButton
+
+-- ระบบจิ้มปุ่มเพื่อเปิด/ปิด
+ToggleButton.MouseButton1Click:Connect(function()
+    Window:Minimize()
+end)
+
+-- ทำให้ปุ่มลากไปมาได้ (สำหรับมือถือ)
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleButton.Position
+    end
+end)
+
+ToggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        ToggleButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
 
 -- [ ตัวแปรหลัก ]
 _G.AutoFarm = false
 _G.FastAttack = false
 _G.SelectWeapon = "Melee"
+_G.FarmMethod = "Above (บนหัว)" 
 
--- [ สร้าง Tabs ]
+-- [ Tabs ]
 local Tabs = {
     Main = Window:AddTab({ Title = "General", Icon = "home" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 -- [ หน้า General ]
-Tabs.Main:AddParagraph({
-    Title = "Auto Farm Level",
-    Content = "ระบบฟาร์มแบบบิน + รับเควสอัตโนมัติ"
-})
-
 local FarmToggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
 FarmToggle:OnChanged(function(Value)
     _G.AutoFarm = Value
+    _G.FastAttack = Value -- เปิดตีรัวอัตโนมัติ
 end)
 
-local FastToggle = Tabs.Main:AddToggle("FastAttack", {Title = "Super Fast Attack (ตีรัวมาก)", Default = false })
-FastToggle:OnChanged(function(Value)
-    _G.FastAttack = Value
-end)
-
--- [ หน้า Settings ]
-local Dropdown = Tabs.Settings:AddDropdown("Weapon", {
-    Title = "Select Combat / Weapon",
-    Values = {"Melee", "Sword", "Fruit"},
-    Multi = false,
+Tabs.Main:AddDropdown("FarmMethod", {
+    Title = "รูปแบบการบินตี",
+    Values = {"Above (บนหัว)", "Below (ใต้ตีน)", "Behind (ข้างหลัง)"},
     Default = 1,
+    Callback = function(Value) _G.FarmMethod = Value end
 })
 
-Dropdown:OnChanged(function(Value)
-    _G.SelectWeapon = Value
+-- [ หน้า Settings ]
+Tabs.Settings:AddDropdown("Weapon", {
+    Title = "Select Weapon",
+    Values = {"Melee", "Sword", "Fruit"},
+    Default = 1,
+    Callback = function(Value) _G.SelectWeapon = Value end
+})
+
+-- [[ ระบบตีรัว (Super Fast Attack) ]]
+task.spawn(function()
+    while true do
+        task.wait() 
+        if _G.FastAttack and _G.AutoFarm then
+            pcall(function()
+                local Combat = game:GetService("ReplicatedStorage").Remotes.Combat
+                for i = 1, 15 do
+                    Combat:FireServer()
+                end
+            end)
+        end
+    end
 end)
 
--- [[ ระบบแก้กดปุ่ม U ไม่ติด (Force Toggle) ]]
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputBegan:Connect(function(input
+-- [[ ระบบบินฟาร์มหลัก ]]
+task.spawn(function()
+    while task.wait(0.01) do
+        if _G.AutoFarm then
+            pcall(function()
+                local lp = game.Players.LocalPlayer
+                local char = lp.Character
+                if not char:FindFirstChildOfClass("Tool") then
+                    local tool = lp.Backpack:FindFirstChild(_G.SelectWeapon)
+                    if tool then char.Humanoid:EquipTool(tool) end
+                end
+
+                if not lp.PlayerGui.Main.Quest.Visible then
+                    char.HumanoidRootPart.CFrame = CFrame.new(1059, 15, 1549)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
+                else
+                    local Enemy = workspace.Enemies:FindFirstChild("Bandit")
+                    if Enemy and Enemy.Humanoid.Health > 0 then
+                        if _G.FarmMethod == "Above (บนหัว)" then
+                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+                        elseif _G.FarmMethod == "Below (ใต้ตีน)" then
+                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, -10, 0)
+                        else
+                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                        end
+                    else
+                        char.HumanoidRootPart.CFrame = CFrame.new(1145, 15, 1630)
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+Fluent:Notify({Title = "U-HUB Loaded!", Content = "BY Neung | ใช้ปุ่ม U ลอยเพื่อเปิด/ปิด", Duration = 5})
