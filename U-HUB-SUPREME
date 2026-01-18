@@ -86,3 +86,34 @@ task.spawn(function()
 end)
 
 Fluent:Notify({Title = "U-HUB", Content = "มีปุ่มตัว 'U' บนจอไว้เปิดปิดเมนูแล้วนะหนึ่ง!", Duration = 5})
+-- [[ 🥊 ระบบตีรัวระดับ 100% (MARU SPEED) ]]
+task.spawn(function()
+    while true do
+        -- ปรับความเร็วตรงนี้ (0.01 คือรัวจัดๆ ระดับ 100%)
+        task.wait(0.01) 
+        
+        if Options.AutoFarmToggle.Value then
+            pcall(function()
+                local Char = LP.Character
+                local Tool = Char:FindFirstChildOfClass("Tool")
+                
+                if Tool then
+                    -- [ 💎 100% SPEED METHOD ]
+                    -- สั่งตีผ่าน Tool โดยตรง
+                    Tool:Activate()
+                    
+                    -- ใช้ VirtualInputManager เบิ้ลดาเมจแบบรัวพิเศษ
+                    -- (ตัวนี้จะทำให้ตีไวกว่าปกติ 2 เท่า)
+                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                    
+                    -- แถมระบบโจมตีแบบรัวพิเศษ (ถ้ามีโมดูลโจมตีในเกม)
+                    local CombatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("RigControllerEvent") or game:GetService("ReplicatedStorage"):FindFirstChild("CombatEvent")
+                    if CombatRemote then
+                        CombatRemote:FireServer()
+                    end
+                end
+            end)
+        end
+    end
+end)
