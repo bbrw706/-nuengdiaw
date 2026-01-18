@@ -10,71 +10,29 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.U 
 })
 
--- [[ สร้างปุ่มเปิด/ปิดสำหรับมือถือ ]]
+-- [[ ปุ่มเปิด/ปิดสำหรับมือถือ ]]
 local ScreenGui = Instance.new("ScreenGui")
 local ToggleButton = Instance.new("TextButton")
-
 ScreenGui.Name = "UHubToggle"
 ScreenGui.Parent = game.CoreGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = ScreenGui
 ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ToggleButton.BorderSizePixel = 2
-ToggleButton.Position = UDim2.new(0.1, 0, 0.15, 0) -- ตำแหน่งปุ่มบนจอ
-ToggleButton.Size = UDim2.new(0, 50, 0, 50) -- ขนาดปุ่ม
-ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.Text = "U" -- ตัวหนังสือบนปุ่ม
+ToggleButton.Position = UDim2.new(0.1, 0, 0.15, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Text = "U"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.TextSize = 24
-
--- ทำให้ปุ่มโค้งมน
 local Corner = Instance.new("UICorner")
 Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = ToggleButton
-
--- ระบบจิ้มปุ่มเพื่อเปิด/ปิด
-ToggleButton.MouseButton1Click:Connect(function()
-    Window:Minimize()
-end)
-
--- ทำให้ปุ่มลากไปมาได้ (สำหรับมือถือ)
-local UserInputService = game:GetService("UserInputService")
-local dragging, dragInput, dragStart, startPos
-
-ToggleButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = ToggleButton.Position
-    end
-end)
-
-ToggleButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        ToggleButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
+ToggleButton.MouseButton1Click:Connect(function() Window:Minimize() end)
 
 -- [ ตัวแปรหลัก ]
 _G.AutoFarm = false
 _G.FastAttack = false
 _G.SelectWeapon = "Melee"
 _G.FarmMethod = "Above (บนหัว)" 
+_G.FarmDistance = 10 
 
 -- [ Tabs ]
 local Tabs = {
@@ -86,14 +44,23 @@ local Tabs = {
 local FarmToggle = Tabs.Main:AddToggle("AutoFarm", {Title = "Auto Farm Level", Default = false })
 FarmToggle:OnChanged(function(Value)
     _G.AutoFarm = Value
-    _G.FastAttack = Value -- เปิดตีรัวอัตโนมัติ
+    _G.FastAttack = Value
 end)
 
 Tabs.Main:AddDropdown("FarmMethod", {
     Title = "รูปแบบการบินตี",
-    Values = {"Above (บนหัว)", "Below (ใต้ตีน)", "Behind (ข้างหลัง)"},
+    Values = {"Above (บนหัว)", "Below (ใต้ดิน)", "Orbit (บินวน)", "Fast Warp (วาร์ปรอบตัว)"},
     Default = 1,
     Callback = function(Value) _G.FarmMethod = Value end
+})
+
+Tabs.Main:AddSlider("Distance", {
+    Title = "ปรับระยะความสูง/ห่าง",
+    Default = 10,
+    Min = 5,
+    Max = 25,
+    Rounding = 0,
+    Callback = function(Value) _G.FarmDistance = Value end
 })
 
 -- [ หน้า Settings ]
@@ -104,46 +71,64 @@ Tabs.Settings:AddDropdown("Weapon", {
     Callback = function(Value) _G.SelectWeapon = Value end
 })
 
--- [[ ระบบตีรัว (Super Fast Attack) ]]
+-- [[ แก้บัคระบบตี (New Fast Attack System) ]]
+local VirtualUser = game:GetService("VirtualUser")
 task.spawn(function()
     while true do
         task.wait() 
         if _G.FastAttack and _G.AutoFarm then
             pcall(function()
+                -- ส่งสัญญาณตีแบบผสม (Remotes + VirtualClick)
                 local Combat = game:GetService("ReplicatedStorage").Remotes.Combat
-                for i = 1, 15 do
-                    Combat:FireServer()
-                end
+                Combat:FireServer()
+                VirtualUser:CaptureController()
+                VirtualUser:Button1Down(Vector2.new(0,0))
             end)
         end
     end
 end)
 
--- [[ ระบบบินฟาร์มหลัก ]]
+-- [[ ฟังก์ชันหยิบอาวุธ ]]
+function EquipWeapon()
+    local lp = game.Players.LocalPlayer
+    if lp.Character and not lp.Character:FindFirstChildOfClass("Tool") then
+        local tool = lp.Backpack:FindFirstChild(_G.SelectWeapon)
+        if tool then lp.Character.Humanoid:EquipTool(tool) end
+    end
+end
+
+-- [[ ระบบฟาร์ม Advance ]]
 task.spawn(function()
-    while task.wait(0.01) do
+    local Angle = 0
+    while task.wait() do
         if _G.AutoFarm then
             pcall(function()
+                EquipWeapon()
                 local lp = game.Players.LocalPlayer
                 local char = lp.Character
-                if not char:FindFirstChildOfClass("Tool") then
-                    local tool = lp.Backpack:FindFirstChild(_G.SelectWeapon)
-                    if tool then char.Humanoid:EquipTool(tool) end
-                end
-
+                
                 if not lp.PlayerGui.Main.Quest.Visible then
                     char.HumanoidRootPart.CFrame = CFrame.new(1059, 15, 1549)
                     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
                 else
                     local Enemy = workspace.Enemies:FindFirstChild("Bandit")
                     if Enemy and Enemy.Humanoid.Health > 0 then
+                        -- บวกลบค่า CFrame ตามรูปแบบ
+                        local TargetCFrame = Enemy.HumanoidRootPart.CFrame
+                        
                         if _G.FarmMethod == "Above (บนหัว)" then
-                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                        elseif _G.FarmMethod == "Below (ใต้ตีน)" then
-                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, -10, 0)
-                        else
-                            char.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                            char.HumanoidRootPart.CFrame = TargetCFrame * CFrame.new(0, _G.FarmDistance, 0)
+                        elseif _G.FarmMethod == "Below (ใต้ดิน)" then
+                            char.HumanoidRootPart.CFrame = TargetCFrame * CFrame.new(0, -_G.FarmDistance, 0)
+                        elseif _G.FarmMethod == "Orbit (บินวน)" then
+                            Angle = Angle + 0.15
+                            char.HumanoidRootPart.CFrame = TargetCFrame * CFrame.Angles(0, Angle, 0) * CFrame.new(0, _G.FarmDistance, 5)
+                        elseif _G.FarmMethod == "Fast Warp (วาร์ปรอบตัว)" then
+                            char.HumanoidRootPart.CFrame = TargetCFrame * CFrame.new(math.random(-7,7), _G.FarmDistance, math.random(-7,7))
                         end
+                        
+                        -- บังคับให้ตัวละครหันหน้าหาศัตรูตลอดเวลาเพื่อให้ตีโดน
+                        char.HumanoidRootPart.CFrame = CFrame.lookAt(char.HumanoidRootPart.Position, TargetCFrame.Position)
                     else
                         char.HumanoidRootPart.CFrame = CFrame.new(1145, 15, 1630)
                     end
@@ -153,4 +138,4 @@ task.spawn(function()
     end
 end)
 
-Fluent:Notify({Title = "U-HUB Loaded!", Content = "BY Neung | ใช้ปุ่ม U ลอยเพื่อเปิด/ปิด", Duration = 5})
+Fluent:Notify({Title = "U-HUB Fixed!", Content = "แก้บัคระบบตีเรียบร้อยแล้วครับ", Duration = 5})
