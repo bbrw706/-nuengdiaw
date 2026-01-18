@@ -9,7 +9,7 @@ local Window = Fluent:CreateWindow({
     SubTitle = "โดย Neung (Maru Inspired)",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, Theme = "Dark", MinimizeKey = Enum.KeyCode.U 
+    Acrylic = false, Theme = "Dark", MinimizeKey = Enum.KeyCode.n 
 })
 
 -- [[ 📊 FPS & PING (V.69) ]]
