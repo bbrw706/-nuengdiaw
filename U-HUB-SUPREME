@@ -1,101 +1,98 @@
 --[[ 
-    💎 U-HUB MARU [STEALTH & PVP EDITION]
-    - ปุ่มซ่อนเมนู (Hide UI) เพื่อความเนียน
-    - ระบบหยุดฟาร์มทันที (Emergency Stop)
-    - ปรับแต่งปุ่มเปิด-ปิดได้เอง
+    💎 U-HUB MARU [FULL SETTINGS EDITION]
+    - เพิ่มหน้า Settings (ตั้งค่า) สำหรับปิด-เปิดเมนู
+    - แก้ไขบัค UI ค้าง กดปิดฟาร์มได้ลื่นๆ
 ]]
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local LP = game.Players.LocalPlayer
 local VIM = game:GetService("VirtualInputManager")
-local RunService = game:GetService("RunService")
 
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung [Stealth Mode]",
+    SubTitle = "BY Neung (Full Settings)",
     TabWidth = 160, Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl -- เปลี่ยนเป็นปุ่มที่หนึ่งถนัดได้ (เช่น LeftControl หรือ U)
+    MinimizeKey = Enum.KeyCode.RightControl -- ปุ่มเริ่มต้นคือ Ctrl ขวา
 })
 
+-- [ 📑 สร้างหน้าต่างเมนู ]
 local Tabs = { 
     Main = Window:AddTab({ Title = "ฟาร์มหลัก", Icon = "sword" }),
-    Config = Window:AddTab({ Title = "ตั้งค่าระบบ", Icon = "settings" }) 
+    Config = Window:AddTab({ Title = "ตั้งค่าสคริปต์", Icon = "settings" }) -- หน้าตั้งค่าที่หนึ่งต้องการ
 }
 local Options = Fluent.Options
 
--- [[ ⚔️ เมนูฟาร์ม ]]
+-- [[ ⚔️ หน้าฟาร์มหลัก ]]
 Tabs.Main:AddToggle("AutoFarm", {Title = "เปิดระบบฟาร์ม", Default = false})
 Tabs.Main:AddSlider("Height", {Title = "ระดับความสูง", Default = 5, Min = 1, Max = 15, Rounding = 1})
 
--- [[ ⚙️ เมนูตั้งค่าความเนียน (PVP Friendly) ]]
+-- [[ ⚙️ หน้าตั้งค่า (Settings) ]]
 Tabs.Config:AddKeybind("MinimizeBind", {
-    Title = "ปุ่มซ่อนเมนู (Hide UI)",
-    Default = "RightControl", -- หนึ่งสามารถเปลี่ยนปุ่มได้ในเกมเลย
-    ChangedCallback = function(New)
-        Window.MinimizeKey = New
+    Title = "ปุ่ม ซ่อน/โชว์ เมนู",
+    Default = "RightControl",
+    ChangedCallback = function(Value)
+        Window.MinimizeKey = Value
+        Fluent:Notify({Title = "U-HUB", Content = "เปลี่ยนปุ่มเมนูเป็น: " .. tostring(Value), Duration = 3})
     end
 })
 
 Tabs.Config:AddButton({
-    Title = "หยุดทุกอย่างทันที (Emergency Stop)",
-    Description = "กดเมื่อมีคนมาหา หรือตอนจะ PVP",
+    Title = "ปิดสคริปต์ทั้งหมด",
+    Description = "ลบเมนูออกจากหน้าจอ",
     Callback = function()
-        Options.AutoFarm:SetValue(false) -- ปิดฟาร์ม
-        pcall(function()
-            if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
-                LP.Character.HumanoidRootPart.SmoothHold:Destroy() -- ลบแรงลอยตัวออกทันที
-            end
-        end)
-        Fluent:Notify({Title = "U-HUB", Content = "หยุดระบบทั้งหมดแล้ว!", Duration = 3})
+        Window:Destroy()
     end
 })
 
--- [[ 🥊 ระบบโจมตีและฟาร์ม (ชุดเดิมที่แก้ให้ตีแรง) ]]
-RunService.Stepped:Connect(function()
-    if Options.AutoFarm.Value then
-        pcall(function()
-            local Char = LP.Character
-            local Root = Char:FindFirstChild("HumanoidRootPart")
-            local Target = nil
-            
-            for _, v in pairs(workspace.Enemies:GetChildren()) do
-                if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                    Target = v; break
-                end
-            end
+-- [[ 🤖 ระบบฟาร์ม (ลื่นพิเศษ ไม่ค้าง) ]]
+task.spawn(function()
+    while true do
+        task.wait(0.01)
+        if Options.AutoFarm.Value then
+            pcall(function()
+                local Char = LP.Character
+                local Root = Char:FindFirstChild("HumanoidRootPart")
+                if not Root then return end
 
-            if Target then
-                Root.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                Root.Velocity = Vector3.new(0,0,0)
-                
-                -- ตี
-                local Tool = Char:FindFirstChildOfClass("Tool")
-                if Tool then Tool:Activate() end
-                VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-
-                if not Root:FindFirstChild("SmoothHold") then
-                    local bv = Instance.new("BodyVelocity", Root)
-                    bv.Name = "SmoothHold"
-                    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                    bv.Velocity = Vector3.new(0,0,0)
+                local Target = nil
+                for _, v in pairs(workspace.Enemies:GetChildren()) do
+                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        Target = v; break
+                    end
                 end
-            end
-        end)
-    else
-        -- ลบระบบบินออกเมื่อไม่ได้ฟาร์ม
-        pcall(function()
-            if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
-                LP.Character.HumanoidRootPart.SmoothHold:Destroy()
-            end
-        end)
+
+                if Target then
+                    -- บินและล็อคตัว
+                    Root.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                    Root.Velocity = Vector3.new(0,0,0)
+                    
+                    if not Root:FindFirstChild("SmoothHold") then
+                        local bv = Instance.new("BodyVelocity", Root)
+                        bv.Name = "SmoothHold"; bv.MaxForce = Vector3.new(9e9, 9e9, 9e9); bv.Velocity = Vector3.new(0,0,0)
+                    end
+
+                    -- บังคับตี
+                    local Tool = Char:FindFirstChildOfClass("Tool")
+                    if Tool then Tool:Activate() end
+                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                end
+            end)
+        else
+            -- เคลียร์ระบบบินเมื่อปิด
+            pcall(function()
+                if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
+                    LP.Character.HumanoidRootPart.SmoothHold:Destroy()
+                end
+            end)
+        end
     end
 end)
 
 Fluent:Notify({
-    Title = "U-HUB STEALTH",
-    Content = "กด Ctrl ขวา เพื่อซ่อนเมนูนะหนึ่ง!",
+    Title = "U-HUB READY",
+    Content = "มีหน้าตั้งค่าให้แล้วนะหนึ่ง! กดที่รูปเฟืองได้เลย",
     Duration = 5
 })
