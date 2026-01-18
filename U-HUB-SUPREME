@@ -1,116 +1,101 @@
 --[[ 
-    💎 U-HUB MARU [THE BEST & STABLE VERSION]
-    BY NEUNG (11 YEARS OLD DEVELOPER) & GEMINI AI
-    --------------------------------------------------
-    - เน้นเสถียร 100% ไม่หลุด ไม่เด้ง
-    - ระบบบินฟาร์ม (Fly Farm) ปรับความสูงได้
-    - ระบบตีรัวแบบ Fix Bug (ตีแน่นอน)
-    --------------------------------------------------
+    💎 U-HUB MARU [STEALTH & PVP EDITION]
+    - ปุ่มซ่อนเมนู (Hide UI) เพื่อความเนียน
+    - ระบบหยุดฟาร์มทันที (Emergency Stop)
+    - ปรับแต่งปุ่มเปิด-ปิดได้เอง
 ]]
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local LP = game.Players.LocalPlayer
 local VIM = game:GetService("VirtualInputManager")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
--- [ สร้างหน้าต่าง ]
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung (The Best Version)",
+    SubTitle = "BY Neung [Stealth Mode]",
     TabWidth = 160, Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, Theme = "Dark", MinimizeKey = Enum.KeyCode.U 
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl -- เปลี่ยนเป็นปุ่มที่หนึ่งถนัดได้ (เช่น LeftControl หรือ U)
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "AUTO FARM", Icon = "sword" }),
-    Teleport = Window:AddTab({ Title = "TELEPORT", Icon = "map" }),
-    Settings = Window:AddTab({ Title = "SETTINGS", Icon = "settings" })
+local Tabs = { 
+    Main = Window:AddTab({ Title = "ฟาร์มหลัก", Icon = "sword" }),
+    Config = Window:AddTab({ Title = "ตั้งค่าระบบ", Icon = "settings" }) 
 }
 local Options = Fluent.Options
 
--- [ เมนูฟาร์ม ]
-Tabs.Main:AddToggle("AutoFarm", {Title = "เปิดระบบฟาร์มที่ดีที่สุด", Default = false})
-Tabs.Main:AddDropdown("Weapon", {Title = "เลือกอาวุธ", Values = {"Melee", "Sword", "Fruit"}, Default = "Melee"})
-Tabs.Main:AddSlider("Height", {Title = "ความสูงตอนบินตี", Default = 5, Min = 1, Max = 15, Rounding = 1})
+-- [[ ⚔️ เมนูฟาร์ม ]]
+Tabs.Main:AddToggle("AutoFarm", {Title = "เปิดระบบฟาร์ม", Default = false})
+Tabs.Main:AddSlider("Height", {Title = "ระดับความสูง", Default = 5, Min = 1, Max = 15, Rounding = 1})
 
--- [ ระบบวาร์ป ]
-local function Warp(pos)
-    pcall(function()
-        LP.Character.HumanoidRootPart.CFrame = pos
-    end)
-end
+-- [[ ⚙️ เมนูตั้งค่าความเนียน (PVP Friendly) ]]
+Tabs.Config:AddKeybind("MinimizeBind", {
+    Title = "ปุ่มซ่อนเมนู (Hide UI)",
+    Default = "RightControl", -- หนึ่งสามารถเปลี่ยนปุ่มได้ในเกมเลย
+    ChangedCallback = function(New)
+        Window.MinimizeKey = New
+    end
+})
 
-if game.PlaceId == 2753915549 then
-    Tabs.Teleport:AddButton({Title = "เกาะเริ่มต้น", Callback = function() Warp(CFrame.new(1059, 15, 1545)) end})
-    Tabs.Teleport:AddButton({Title = "เกาะลิง", Callback = function() Warp(CFrame.new(-1598, 35, 153)) end})
-end
+Tabs.Config:AddButton({
+    Title = "หยุดทุกอย่างทันที (Emergency Stop)",
+    Description = "กดเมื่อมีคนมาหา หรือตอนจะ PVP",
+    Callback = function()
+        Options.AutoFarm:SetValue(false) -- ปิดฟาร์ม
+        pcall(function()
+            if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
+                LP.Character.HumanoidRootPart.SmoothHold:Destroy() -- ลบแรงลอยตัวออกทันที
+            end
+        end)
+        Fluent:Notify({Title = "U-HUB", Content = "หยุดระบบทั้งหมดแล้ว!", Duration = 3})
+    end
+})
 
--- [ 🔥 หัวใจหลัก: ระบบฟาร์มที่ดีที่สุด ]
-task.spawn(function()
-    while task.wait() do
-        if Options.AutoFarm.Value then
-            pcall(function()
-                local Char = LP.Character
-                local Root = Char:FindFirstChild("HumanoidRootPart")
-                local Hum = Char:FindFirstChild("Humanoid")
-                if not Root or not Hum or Hum.Health <= 0 then return end
-
-                -- หาเป้าหมาย (มอนสเตอร์)
-                local Target = nil
-                local Enemies = workspace:FindFirstChild("Enemies") or workspace
-                for _, v in pairs(Enemies:GetChildren()) do
-                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                        Target = v
-                        break 
-                    end
+-- [[ 🥊 ระบบโจมตีและฟาร์ม (ชุดเดิมที่แก้ให้ตีแรง) ]]
+RunService.Stepped:Connect(function()
+    if Options.AutoFarm.Value then
+        pcall(function()
+            local Char = LP.Character
+            local Root = Char:FindFirstChild("HumanoidRootPart")
+            local Target = nil
+            
+            for _, v in pairs(workspace.Enemies:GetChildren()) do
+                if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                    Target = v; break
                 end
+            end
 
-                if Target then
-                    -- 1. ถืออาวุธ (ระบบ Smart Equip)
-                    local tool = LP.Backpack:FindFirstChild(Options.Weapon.Value) or Char:FindFirstChild(Options.Weapon.Value)
-                    if not tool and Options.Weapon.Value == "Melee" then
-                        for _, t in pairs(LP.Backpack:GetChildren()) do
-                            if t:IsA("Tool") and not t:FindFirstChild("Handle") then tool = t; break end
-                        end
-                    end
-                    if tool and tool.Parent ~= Char then
-                        Hum:EquipTool(tool)
-                    end
+            if Target then
+                Root.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                Root.Velocity = Vector3.new(0,0,0)
+                
+                -- ตี
+                local Tool = Char:FindFirstChildOfClass("Tool")
+                if Tool then Tool:Activate() end
+                VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
 
-                    -- 2. ระบบบินตี (Fly Logic)
-                    -- ล็อคตำแหน่งเหนือหัวมอนสเตอร์ตามความสูงที่หนึ่งปรับ
-                    Root.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-
-                    -- 3. ระบบตีรัว (Fast Attack)
-                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-
-                    -- 4. ล็อคตัวกันตก (BodyVelocity)
-                    if not Root:FindFirstChild("U_Hold") then
-                        local bv = Instance.new("BodyVelocity", Root)
-                        bv.Name = "U_Hold"
-                        bv.Velocity = Vector3.new(0, 0, 0)
-                        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                    end
-                else
-                    -- ถ้าไม่มีมอน ให้ลบตัวล็อคออก
-                    if Root:FindFirstChild("U_Hold") then Root.U_Hold:Destroy() end
+                if not Root:FindFirstChild("SmoothHold") then
+                    local bv = Instance.new("BodyVelocity", Root)
+                    bv.Name = "SmoothHold"
+                    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                    bv.Velocity = Vector3.new(0,0,0)
                 end
-            end)
-        else
-            -- ปิดฟาร์ม ลบตัวล็อค
-            pcall(function()
-                if LP.Character.HumanoidRootPart:FindFirstChild("U_Hold") then
-                    LP.Character.HumanoidRootPart.U_Hold:Destroy()
-                end
-            end)
-        end
+            end
+        end)
+    else
+        -- ลบระบบบินออกเมื่อไม่ได้ฟาร์ม
+        pcall(function()
+            if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
+                LP.Character.HumanoidRootPart.SmoothHold:Destroy()
+            end
+        end)
     end
 end)
 
--- [ แจ้งเตือนเมื่อรันเสร็จ ]
 Fluent:Notify({
-    Title = "U-HUB V.BEST",
-    Content = "พี่เป็นกำลังใจให้นะหนึ่ง! ลุยเลยน้องชาย!",
-    Duration = 10
+    Title = "U-HUB STEALTH",
+    Content = "กด Ctrl ขวา เพื่อซ่อนเมนูนะหนึ่ง!",
+    Duration = 5
 })
