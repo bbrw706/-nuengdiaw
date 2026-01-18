@@ -1,7 +1,7 @@
 --[[ 
-    💎 U-HUB MARU [FULL SETTINGS EDITION]
-    - เพิ่มหน้า Settings (ตั้งค่า) สำหรับปิด-เปิดเมนู
-    - แก้ไขบัค UI ค้าง กดปิดฟาร์มได้ลื่นๆ
+    💎 U-HUB MARU [FLOATING BUTTON EDITION]
+    - เพิ่มปุ่มกดเปิด-ปิดเมนูบนหน้าจอ (สำหรับคนหาปุ่มไม่เจอ)
+    - แก้ไขอาการเมาส์ค้าง (Mouse Lock Fix)
 ]]
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
@@ -10,46 +10,51 @@ local VIM = game:GetService("VirtualInputManager")
 
 local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
-    SubTitle = "BY Neung (Full Settings)",
+    SubTitle = "BY Neung (Floating UI)",
     TabWidth = 160, Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl -- ปุ่มเริ่มต้นคือ Ctrl ขวา
+    MinimizeKey = Enum.KeyCode.RightControl
 })
 
--- [ 📑 สร้างหน้าต่างเมนู ]
 local Tabs = { 
     Main = Window:AddTab({ Title = "ฟาร์มหลัก", Icon = "sword" }),
-    Config = Window:AddTab({ Title = "ตั้งค่าสคริปต์", Icon = "settings" }) -- หน้าตั้งค่าที่หนึ่งต้องการ
+    Settings = Window:AddTab({ Title = "ตั้งค่า", Icon = "settings" })
 }
 local Options = Fluent.Options
 
--- [[ ⚔️ หน้าฟาร์มหลัก ]]
+-- [[ 🔘 สร้างปุ่มเปิด-ปิดลอยตัว (Floating Button) ]]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+
+ToggleButton.Name = "UHubToggleButton"
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.1, 0) -- ตำแหน่งปุ่ม
+ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ToggleButton.Text = "U" -- ตัวย่อ U-HUB
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextSize = 20
+
+-- ทำให้ปุ่มกลมและมีขอบเงา
+local Corner = Instance.new("UICorner", ToggleButton)
+Corner.CornerRadius = UDim.new(1, 0)
+local Stroke = Instance.new("UIStroke", ToggleButton)
+Stroke.Color = Color3.fromRGB(0, 170, 255)
+Stroke.Thickness = 2
+
+-- สั่งให้ปุ่มลอยตัวนี้เปิด-ปิดเมนู Fluent
+ToggleButton.MouseButton1Click:Connect(function()
+    Window:Minimize() -- สั่งย่อหรือขยายหน้าต่าง
+end)
+
+-- [[ ⚔️ ระบบฟาร์ม (ปรับจังหวะใหม่ไม่ให้เมาส์ค้าง) ]]
 Tabs.Main:AddToggle("AutoFarm", {Title = "เปิดระบบฟาร์ม", Default = false})
-Tabs.Main:AddSlider("Height", {Title = "ระดับความสูง", Default = 5, Min = 1, Max = 15, Rounding = 1})
+Tabs.Main:AddSlider("Height", {Title = "ระยะสูง", Default = 5, Min = 1, Max = 15, Rounding = 1})
 
--- [[ ⚙️ หน้าตั้งค่า (Settings) ]]
-Tabs.Config:AddKeybind("MinimizeBind", {
-    Title = "ปุ่ม ซ่อน/โชว์ เมนู",
-    Default = "RightControl",
-    ChangedCallback = function(Value)
-        Window.MinimizeKey = Value
-        Fluent:Notify({Title = "U-HUB", Content = "เปลี่ยนปุ่มเมนูเป็น: " .. tostring(Value), Duration = 3})
-    end
-})
-
-Tabs.Config:AddButton({
-    Title = "ปิดสคริปต์ทั้งหมด",
-    Description = "ลบเมนูออกจากหน้าจอ",
-    Callback = function()
-        Window:Destroy()
-    end
-})
-
--- [[ 🤖 ระบบฟาร์ม (ลื่นพิเศษ ไม่ค้าง) ]]
 task.spawn(function()
     while true do
-        task.wait(0.01)
+        task.wait(0.15) -- เพิ่มเวลาหน่วงเพื่อให้เมาส์ไม่ค้าง
         if Options.AutoFarm.Value then
             pcall(function()
                 local Char = LP.Character
@@ -64,35 +69,20 @@ task.spawn(function()
                 end
 
                 if Target then
-                    -- บินและล็อคตัว
                     Root.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, Options.Height.Value, 0) * CFrame.Angles(math.rad(-90), 0, 0)
                     Root.Velocity = Vector3.new(0,0,0)
                     
-                    if not Root:FindFirstChild("SmoothHold") then
-                        local bv = Instance.new("BodyVelocity", Root)
-                        bv.Name = "SmoothHold"; bv.MaxForce = Vector3.new(9e9, 9e9, 9e9); bv.Velocity = Vector3.new(0,0,0)
-                    end
-
-                    -- บังคับตี
+                    -- ตีแบบถนอมเมาส์
                     local Tool = Char:FindFirstChildOfClass("Tool")
-                    if Tool then Tool:Activate() end
-                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                end
-            end)
-        else
-            -- เคลียร์ระบบบินเมื่อปิด
-            pcall(function()
-                if LP.Character.HumanoidRootPart:FindFirstChild("SmoothHold") then
-                    LP.Character.HumanoidRootPart.SmoothHold:Destroy()
+                    if Tool then 
+                        Tool:Activate()
+                        VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                        VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                    end
                 end
             end)
         end
     end
 end)
 
-Fluent:Notify({
-    Title = "U-HUB READY",
-    Content = "มีหน้าตั้งค่าให้แล้วนะหนึ่ง! กดที่รูปเฟืองได้เลย",
-    Duration = 5
-})
+Fluent:Notify({Title = "U-HUB", Content = "มีปุ่มตัว 'U' บนจอไว้เปิดปิดเมนูแล้วนะหนึ่ง!", Duration = 5})
