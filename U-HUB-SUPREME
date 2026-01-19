@@ -1,99 +1,144 @@
--- [[ 🛡️ U-HUB SUPREME FINAL (ONE-PIECE CODE) ]]
-local LP = game.Players.LocalPlayer
-local RS = game:GetService("ReplicatedStorage")
-local RigEvent = RS:WaitForChild("RigControllerEvent")
+-- [[ 💎 U-HUB EVADE: SUPREME V.9 💎 ]]
+-- [[ 👤 เจ้าของ: คุณหนึ่ง (Neung) ]]
+-- [[ ⌨️ คีย์ลัดหลัก: U (เปิด-ปิดเมนู) ]]
 
--- [[ 🎨 สร้าง UI แบบ Custom (ไม่ต้องโหลดเว็บ) ]]
-pcall(function() if game.CoreGui:FindFirstChild("U_HUB_NEUNG") then game.CoreGui.U_HUB_NEUNG:Destroy() end end)
-local SG = Instance.new("ScreenGui", game.CoreGui); SG.Name = "U_HUB_NEUNG"
+-- ---------------------------------------------------------
+-- [ 🛡️ SECTION 1: ระบบกันแบน & กันหลุด ภาษาไทย ]
+-- ---------------------------------------------------------
+if not game:IsLoaded() then game.Loaded:Wait() end
 
-local Main = Instance.new("Frame", SG)
-Main.Size = UDim2.new(0, 250, 0, 300); Main.Position = UDim2.new(0.5, -125, 0.5, -150)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Main.Active = true; Main.Draggable = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
-
-local Title = Instance.new("TextLabel", Main)
-Title.Text = "U-HUB SUPREME 💎"; Title.Size = UDim2.new(1, 0, 0, 50)
-Title.TextColor3 = Color3.fromRGB(0, 170, 255); Title.BackgroundTransparency = 1; Title.TextSize = 20
-
--- [[ 🔘 ปุ่มเปิดฟาร์ม ]]
-local FarmBtn = Instance.new("TextButton", Main)
-FarmBtn.Text = "START AUTO FARM"; FarmBtn.Size = UDim2.new(0.8, 0, 0, 50); FarmBtn.Position = UDim2.new(0.1, 0, 0.25, 0)
-FarmBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", FarmBtn).CornerRadius = UDim.new(0, 10)
-
--- [[ 🔘 ปุ่มอัพ Stats (อัพ Melee เป็นหลัก) ]]
-local StatBtn = Instance.new("TextButton", Main)
-StatBtn.Text = "AUTO STATS: OFF"; StatBtn.Size = UDim2.new(0.8, 0, 0, 50); StatBtn.Position = UDim2.new(0.1, 0, 0.5, 0)
-StatBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); StatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", StatBtn).CornerRadius = UDim.new(0, 10)
-
--- [[ 📋 ระบบการทำงาน ]]
-_G.Farm = false
-_G.Stats = false
-
-FarmBtn.MouseButton1Click:Connect(function()
-    _G.Farm = not _G.Farm
-    FarmBtn.Text = _G.Farm and "FARMING... (ON)" or "START AUTO FARM"
-    FarmBtn.BackgroundColor3 = _G.Farm and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(40, 40, 40)
-end)
-
-StatBtn.MouseButton1Click:Connect(function()
-    _G.Stats = not _G.Stats
-    StatBtn.Text = _G.Stats and "AUTO STATS: ON" or "AUTO STATS: OFF"
-    StatBtn.BackgroundColor3 = _G.Stats and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(40, 40, 40)
-end)
-
--- [[ 🚀 ระบบฟาร์ม & โจมตี ]]
 task.spawn(function()
-    while true do task.wait(0.1)
-        if _G.Farm then
-            pcall(function()
-                -- 1. เช็คเควส (เกาะขนม Candy Rebel)
-                if not LP.PlayerGui.Main.Quest.Visible then
-                    LP.Character.HumanoidRootPart.CFrame = CFrame.new(-1147, 13, -14510) -- NPC
-                    task.wait(0.5)
-                    RS.Remotes.CommF_:InvokeServer("StartQuest", "CandyQuest", 1)
-                else
-                    -- 2. หามอนสเตอร์
-                    local Enemy = workspace.Enemies:FindFirstChild("Candy Rebel")
-                    if Enemy and Enemy:FindFirstChild("Humanoid") and Enemy.Humanoid.Health > 0 then
-                        -- บินสูง 15 และหันหน้าเข้ามอน
-                        LP.Character.HumanoidRootPart.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 15, 0)
-                        LP.Character.HumanoidRootPart.CFrame = CFrame.new(LP.Character.HumanoidRootPart.Position, Enemy.HumanoidRootPart.Position)
+    local Player = game:GetService("Players").LocalPlayer
+    local MT = getrawmetatable(game)
+    local OldNamecall = MT.__namecall
+    setreadonly(MT, false)
 
-                        -- ถืออาวุธและยิงดาเมจ (Maru Attack)
-                        local Tool = LP.Backpack:FindFirstChildOfClass("Tool") or LP.Character:FindFirstChildOfClass("Tool")
-                        if Tool and Tool.Parent ~= LP.Character then LP.Character.Humanoid:EquipTool(Tool) end
-                        
-                        RigEvent:FireServer("Attack")
-                        if LP.Character:FindFirstChild("Animate") then LP.Character.Animate.Disabled = true end
-                    else
-                        -- รอมอนสปาวน์
-                        local Spawn = workspace._WorldOrigin.EnemySpawns:FindFirstChild("Candy Rebel")
-                        if Spawn then LP.Character.HumanoidRootPart.CFrame = Spawn.CFrame * CFrame.new(0, 30, 0) end
+    MT.__namecall = newcclosure(function(self, ...)
+        local Method = getnamecallmethod()
+        if Method == "Kick" or Method == "kick" then
+            warn("🛡️ U-HUB PROTECT: ป้องกันการโดนเตะเรียบร้อย!")
+            return nil
+        end
+        return OldNamecall(self, ...)
+    end)
+    setreadonly(MT, true)
+end)
+
+-- ---------------------------------------------------------
+-- [ 🏗️ SECTION 2: โหลด LIBRARY และหน้าเลือกอุปกรณ์ ]
+-- ---------------------------------------------------------
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+
+local Selection = Instance.new("ScreenGui", game.CoreGui)
+local Frame = Instance.new("Frame", Selection)
+Frame.Size = UDim2.new(0, 350, 0, 200); Frame.Position = UDim2.new(0.5, -175, 0.5, -100); Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+local UICorner = Instance.new("UICorner", Frame); UICorner.CornerRadius = UDim.new(0, 15)
+local UIStroke = Instance.new("UIStroke", Frame); UIStroke.Color = Color3.fromRGB(255, 0, 0); UIStroke.Thickness = 3
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 60); Title.Text = "💎 U-HUB SUPREME 💎\nระบบฟาร์ม & คีย์ลัด U"; Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.TextSize = 20; Title.Font = Enum.Font.GothamBold; Title.BackgroundTransparency = 1
+
+local MobileBtn = Instance.new("TextButton", Frame)
+MobileBtn.Text = "📱 มือถือ"; MobileBtn.Size = UDim2.new(0, 140, 0, 50); MobileBtn.Position = UDim2.new(0.05, 0, 0.6, 0); MobileBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255); MobileBtn.TextColor3 = Color3.fromRGB(255, 255, 255); Instance.new("UICorner", MobileBtn)
+
+local PCBtn = Instance.new("TextButton", Frame)
+PCBtn.Text = "💻 คอม"; PCBtn.Size = UDim2.new(0, 140, 0, 50); PCBtn.Position = UDim2.new(0.53, 0, 0.6, 0); PCBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 50); PCBtn.TextColor3 = Color3.fromRGB(255, 255, 255); Instance.new("UICorner", PCBtn)
+
+-- ---------------------------------------------------------
+-- [ 🚀 SECTION 3: ฟังชั่นหลัก ]
+-- ---------------------------------------------------------
+local function RunNeungScript(platform)
+    Selection:Destroy()
+    local Window = Library.CreateLib("💎 U-HUB SUPREME | " .. platform, "BloodTheme")
+
+    -- [[ แท็บ: ฟาร์มโทเคน & เลเวล ]]
+    local TabFarm = Window:NewTab("💰 ฟาร์มเงิน & เลเวล")
+    local SecFarm = TabFarm:NewSection("ระบบฟาร์มอัตโนมัติ")
+
+    SecFarm:NewToggle("เก็บโทเคนอัตโนมัติ (Auto Collect)", "เก็บเงินที่ตกตามพื้นทันที", function(state)
+        _G.AutoTokens = state
+        task.spawn(function()
+            while _G.AutoTokens do
+                pcall(function()
+                    for _, v in pairs(game:GetService("Workspace"):GetChildren()) do
+                        if v.Name == "Token" or v:FindFirstChild("Token") then
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+                            task.wait(0.1)
+                        end
                     end
-                end
-            end)
-        end
-    end
-end)
+                end)
+                task.wait(0.5)
+            end
+        end)
+    end)
 
--- [[ 📊 ระบบอัพ Stats ออโต้ ]]
-task.spawn(function()
-    while true do task.wait(1)
-        if _G.Stats and LP.Data.StatsPoints.Value > 0 then
-            RS.Remotes.CommF_:InvokeServer("AddPoint", "Melee", 3)
-        end
-    end
-end)
+    SecFarm:NewToggle("ชุบไว 1 วิ + ออโต้ชุบ", "ฟาร์มเลเวลจากเพื่อน", function(state)
+        _G.FarmLevel = state
+        task.spawn(function()
+            while _G.FarmLevel do
+                pcall(function()
+                    for _, v in pairs(game.Players:GetPlayers()) do
+                        if v ~= game.Players.LocalPlayer and v.Character and v.Character.Humanoid.Health <= 0 then
+                            local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                            if dist < 20 then
+                                game:GetService("ReplicatedStorage").Events.Revive:FireServer(v.Name)
+                            end
+                        end
+                    end
+                    game:GetService("ReplicatedStorage").Events.Revive:FireServer(true)
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end)
 
--- [[ 🛡️ SAFETY: NoClip ]]
-game:GetService("RunService").Stepped:Connect(function()
-    if _G.Farm and LP.Character then
-        for _, v in pairs(LP.Character:GetChildren()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
+    -- [[ แท็บ: การเคลื่อนที่ (เด้งสูง) ]]
+    local TabJump = Window:NewTab("🚀 ระบบเด้ง")
+    local SecJump = TabJump:NewSection("เด้งหนีบอท")
+    SecJump:NewDropdown("โหมดการเด้ง", "เลือกท่า", {"เด้งธรรมดา", "เด้งระดับเทพ"}, function(opt) _G.LeapMode = opt end)
+    SecJump:NewSlider("ระดับความสูง", "ปรับได้ตามใจ", 350, 50, function(s) _G.LeapPowerValue = s end)
+    
+    local function DoLeap()
+        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local Power = _G.LeapPowerValue or 120
+            if _G.LeapMode == "เด้งระดับเทพ" then Power = Power * 1.6 end
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, Power, hrp.Velocity.Z)
         end
-        LP.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
     end
-end)
+
+    -- [[ แท็บ: ตั้งค่า & คีย์ลัด ]]
+    local TabSet = Window:NewTab("⚙️ ตั้งค่า")
+    local SecSet = TabSet:NewSection("ระบบคีย์ลัด (Keybind)")
+
+    SecSet:NewKeybind("คีย์ลัดเปิด/ปิดเมนู", "ค่าเริ่มต้นคือปุ่ม U", Enum.KeyCode.U, function()
+        Library:ToggleUI()
+    end)
+
+    if platform == "PC" then
+        SecSet:NewKeybind("คีย์ลัดกดเด้งสูง", "ใช้เมาส์หรือคีย์บอร์ดก็ได้", Enum.KeyCode.Space, function()
+            DoLeap()
+        end)
+    end
+
+    -- [[ 📱 ปุ่มลอย N/U (Mobile Only) ]]
+    if platform == "Mobile" then
+        local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+        local MainBtn = Instance.new("Frame", ScreenGui)
+        MainBtn.Size = UDim2.new(0, 60, 0, 60); MainBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
+        MainBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); MainBtn.Draggable = true; MainBtn.Active = true
+        Instance.new("UICorner", MainBtn).CornerRadius = UDim.new(1, 0)
+        local TextLabel = Instance.new("TextLabel", MainBtn)
+        TextLabel.Size = UDim2.new(1, 0, 1, 0); TextLabel.Text = "N"; TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255); TextLabel.TextSize = 30; TextLabel.Font = Enum.Font.GothamBold; TextLabel.BackgroundTransparency = 1
+        local ClickBtn = Instance.new("TextButton", MainBtn)
+        ClickBtn.Size = UDim2.new(1, 0, 1, 0); ClickBtn.BackgroundTransparency = 1; ClickBtn.Text = ""
+        ClickBtn.MouseButton1Click:Connect(function()
+            Library:ToggleUI()
+            TextLabel.Text = (TextLabel.Text == "N") and "U" or "N"
+        end)
+    end
+end
+
+-- [ 🖱️ ระบบปุ่มหน้าเลือก ]
+MobileBtn.MouseButton1Click:Connect(function() RunNeungScript("Mobile") end)
+PCBtn.MouseButton1Click:Connect(function() RunNeungScript("PC") end)
