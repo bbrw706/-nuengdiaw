@@ -1,3 +1,47 @@
+-- [[ 🌟 U-HUB CUSTOM LOADING SCREEN (REALRISE STYLE) 🌟 ]]
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 0, 0, 0) -- เริ่มจากจุดเล็กๆ
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "U-HUB SUPREME"
+Title.Size = UDim2.new(1, 0, 0.6, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.TextSize = 30
+Title.BackgroundTransparency = 1
+Title.TextTransparency = 1
+
+-- อนิเมชั่นเปิดตัว
+MainFrame:TweenSize(UDim2.new(0, 300, 0, 150), "Out", "Quad", 0.5, true)
+task.wait(0.5)
+TweenService:Create(Title, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+
+-- แถบโหลด
+local BarBG = Instance.new("Frame", MainFrame)
+BarBG.Size = UDim2.new(0.8, 0, 0.1, 0)
+BarBG.Position = UDim2.new(0.1, 0, 0.7, 0)
+BarBG.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Instance.new("UICorner", BarBG)
+
+local BarFill = Instance.new("Frame", BarBG)
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+Instance.new("UICorner", BarFill)
+
+-- จำลองการโหลดแบบเทพๆ
+for i = 1, 100 do
+    BarFill:TweenSize(UDim2.new(i/100, 0, 1, 0), "Out", "Quad", 0.05, true)
+    task.wait(0.02)
+end
+
+task.wait(0.5)
+ScreenGui:Destroy() -- พอโหลดเสร็จก็ลบทิ้งแล้วให้เมนูหลักเด้งขึ้นมา
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
