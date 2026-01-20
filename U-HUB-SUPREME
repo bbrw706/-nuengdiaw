@@ -844,3 +844,532 @@ task.spawn(function()
                     local Enemy = nil
                     for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
                         if v.Name ==
+-- [[ 📍 ตั้งค่า Stats ]]
+local StatsSettings = {
+    Selected = "Melee", -- ค่าเริ่มต้น
+    Enabled = false
+}
+
+-- [[ 🎨 สร้าง UI สำหรับ Stats ]]
+Tabs.Misc:AddParagraph({Title = "AUTO STATS", Content = "เลือกว่าจะอัปแต้มลงที่ไหน"})
+
+local StatsDropdown = Tabs.Misc:AddDropdown("StatsSelect", {
+    Title = "Select Stats (เลือกสายที่จะอัป)",
+    Values = {"Melee", "Defense", "Sword", "Gun", "Demon Fruit"},
+    Default = "Melee",
+})
+
+StatsDropdown:OnChanged(function(Value)
+    StatsSettings.Selected = Value
+end)
+
+Tabs.Misc:AddToggle("AutoStatsToggle", {
+    Title = "Start Auto Stats",
+    Default = false
+}):OnChanged(function(Value)
+    StatsSettings.Enabled = Value
+end)
+
+-- [[ 🚀 ระบบสั่งการ Stats ]]
+task.spawn(function()
+    while task.wait(1) do -- เช็กทุก 1 วินาทีพอ ไม่ต้องรัวมาก
+        if StatsSettings.Enabled then
+            pcall(function()
+                local Points = game.Players.LocalPlayer.Data.StatsPoints.Value
+                if Points > 0 then
+                    -- ส่งคำสั่งไปที่ Server เพื่ออัปสแตท
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", StatsSettings.Selected, Points)
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ตั้งค่า Equip ]]
+_G.AutoEquip = false
+_G.WeaponToHold = "" -- ชื่ออาวุธที่หนึ่งต้องการใช้
+
+-- [[ 🎨 สร้าง UI สำหรับ Equip ]]
+Tabs.Misc:AddParagraph({Title = "AUTO EQUIP", Content = "สคริปต์จะหยิบอาวุธให้อัตโนมัติ"})
+
+Tabs.Misc:AddToggle("AutoEquipToggle", {
+    Title = "Auto Equip Weapon",
+    Default = false
+}):OnChanged(function(v)
+    _G.AutoEquip = v
+end)
+
+-- [[ 🚀 ระบบสั่งการ Equip ]]
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.AutoEquip then
+            pcall(function()
+                local Char = game.Players.LocalPlayer.Character
+                local Backpack = game.Players.LocalPlayer.Backpack
+                
+                -- ถ้าในมือยังไม่มีอาวุธ
+                if not Char:FindFirstChildOfClass("Tool") then
+                    -- ค้นหาอาวุธในกระเป๋า
+                    for _, tool in pairs(Backpack:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            -- เลือกหยิบอาวุธชิ้นแรกที่เจอ (หรือชิ้นที่แรงที่สุด)
+                            Char.Humanoid:EquipTool(tool)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 🚀 ระบบ Anti-AFK : รันอัตโนมัติเมื่อเปิดสคริปต์ ]]
+task.spawn(function()
+    local VirtualUser = game:GetService("VirtualUser")
+    
+    -- ใช้ระบบเช็คการเชื่อมต่อของเกม
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        -- เมื่อเกมตรวจพบว่าเราอยู่นิ่ง (Idled)
+        -- สคริปต์จะสั่งให้ตัวละครขยับเม้าส์หรือกดปุ่มเบาๆ เพื่อหลอกระบบ
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+        
+        -- แจ้งเตือนใน Console ว่าระบบทำงาน (เอาไว้ดูว่ากันหลุดได้จริงไหม)
+        warn("U-HUB: Anti-AFK is working to keep you in game!")
+    end)
+end)
+
+-- [[ 🎨 (แถม) ปุ่มลดแลคหน้าจอขาว : White Screen ]]
+-- ช่วยให้มือถือไม่ร้อนเวลาเปิดฟาร์มข้ามคืน
+Tabs.Misc:AddToggle("WhiteScreen", {
+    Title = "White Screen (ประหยัดแบต/ลดความร้อน)",
+    Default = false
+}):OnChanged(function(v)
+    _G.WhiteScreenEnabled = v
+end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if _G.WhiteScreenEnabled then
+            -- ปิดการแสดงผลกราฟิกชั่วคราว
+            game:GetService("RunService"):Set3dRenderingEnabled(false)
+        else
+            -- เปิดการแสดงผลตามปกติ
+            game:GetService("RunService"):Set3dRenderingEnabled(true)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดเกาะที่ 1 โลก 2 ]]
+local Sea2_Island1 = {
+    Name = "Kingdom of Rose",
+    QuestPos = CFrame.new(-426.3, 73.2, 1836.5), -- จุดรับเควสหน้าเมือง
+    -- มอนสเตอร์ตัวที่ 1 (Raider) - เลเวล 700
+    Mob1 = { Name = "Raider", QuestID = 1, MonsterPos = CFrame.new(-650.4, 73.2, 1750.5) },
+    -- มอนสเตอร์ตัวที่ 2 (Mercenary) - เลเวล 725
+    Mob2 = { Name = "Mercenary", QuestID = 2, MonsterPos = CFrame.new(-1050.2, 73.2, 1620.8) }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับโลก 2 ]]
+Tabs.Main:AddParagraph({Title = "SECOND SEA - ISLAND 1", Content = "อาณาจักรกุหลาบ (เลเวล 700-750)"})
+
+Tabs.Main:AddToggle("FarmRaider", { Title = "Auto Farm: Raider", Default = false }):OnChanged(function(v) _G.Farm_Raider = v end)
+Tabs.Main:AddToggle("FarmMercenary", { Title = "Auto Farm: Mercenary", Default = false }):OnChanged(function(v) _G.Farm_Mercenary = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัดโลก 2 ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_Raider or _G.Farm_Mercenary then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เลือกเป้าหมาย
+                local TargetData = _G.Farm_Raider and Sea2_Island1.Mob1 or Sea2_Island1.Mob2
+                
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    -- วาร์ปไปรับเควส (Area1Quest)
+                    Root.CFrame = Sea2_Island1.QuestPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "Area1Quest", TargetData.QuestID)
+                else
+                    -- วาร์ปไปจ่อหัว
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == TargetData.Name and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0) -- โลก 2 มอนตัวใหญ่ขึ้น พี่เพิ่มความสูงเป็น 12 นะ
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = TargetData.MonsterPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดส่วนต่อขยายโลก 2 ]]
+local Sea2_Data = {
+    -- เกาะกุหลาบ โซน 2 (Swan Pirates)
+    SwanPirate = {
+        QuestPos = CFrame.new(-634.4, 73.2, 1475.2),
+        Name = "Swan Pirate",
+        QuestID = 1,
+        MonsterPos = CFrame.new(-1150.5, 73.2, 1380.4)
+    },
+    -- เกาะ Green Bit (เถาวัลย์ยักษ์)
+    GreenBit = {
+        QuestPos = CFrame.new(-2440.5, 73.2, -2635.4),
+        Name = "Tushita Quest", -- ชื่อกลุ่มเควส
+        Mob1 = { Name = "Marine Captain", QuestID = 1, MonsterPos = CFrame.new(-2850.2, 73.2, -3050.4) },
+        Mob2 = { Name = "Marine Admiral", QuestID = 2, MonsterPos = CFrame.new(-3200.4, 73.2, -2980.2) } -- บอสเล็ก
+    }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับเกาะกุหลาบ Zone 2 & Green Bit ]]
+Tabs.Main:AddParagraph({Title = "KINGDOM OF ROSE - ZONE 2", Content = "ฟาร์มพวกสวอน (เลเวล 775-850)"})
+
+Tabs.Main:AddToggle("FarmSwanPirate", { Title = "Auto Farm: Swan Pirate", Default = false }):OnChanged(function(v) _G.Farm_SwanPirate = v end)
+
+Tabs.Main:AddParagraph({Title = "GREEN BIT", Content = "เกาะเถาวัลย์ยักษ์ (เลเวล 875-925)"})
+
+Tabs.Main:AddToggle("FarmMarineCaptain", { Title = "Auto Farm: Marine Captain", Default = false }):OnChanged(function(v) _G.Farm_MarineCaptain = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด (รันแยกกันเพื่อความลื่น) ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_SwanPirate or _G.Farm_MarineCaptain then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เช็คเป้าหมาย
+                local Target = nil
+                local QName = ""
+                local QID = 1
+                local QPos = nil
+                local MPos = nil
+
+                if _G.Farm_SwanPirate then
+                    Target = Sea2_Data.SwanPirate.Name
+                    QName = "Area2Quest"
+                    QID = Sea2_Data.SwanPirate.QuestID
+                    QPos = Sea2_Data.SwanPirate.QuestPos
+                    MPos = Sea2_Data.SwanPirate.MonsterPos
+                elseif _G.Farm_MarineCaptain then
+                    Target = Sea2_Data.GreenBit.Mob1.Name
+                    QName = "GreenBitQuest"
+                    QID = Sea2_Data.GreenBit.Mob1.QuestID
+                    QPos = Sea2_Data.GreenBit.QuestPos
+                    MPos = Sea2_Data.GreenBit.Mob1.MonsterPos
+                end
+
+                -- ระบบรับเควสและตี (Logic เดิมที่หนึ่งคุ้นเคย)
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    Root.CFrame = QPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", QName, QID)
+                else
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == Target and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = MPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดเกาะสุสานและเกาะหิมะ ]]
+local Sea2_Late_Data = {
+    -- เกาะสุสาน (Graveyard)
+    Graveyard = {
+        QuestPos = CFrame.new(-437.1, 16.1, -3660.5),
+        Mob1 = { Name = "Zombie", QuestID = 1, MonsterPos = CFrame.new(-195.4, 16.1, -3680.2) },
+        Mob2 = { Name = "Vampire", QuestID = 2, MonsterPos = CFrame.new(-480.2, 16.1, -3450.5) }
+    },
+    -- เกาะภูเขาหิมะ (Snow Mountain)
+    SnowMountain = {
+        QuestPos = CFrame.new(605.2, 401.5, -5370.4),
+        Mob1 = { Name = "Snow Trooper", QuestID = 1, MonsterPos = CFrame.new(450.4, 401.5, -5300.2) },
+        Mob2 = { Name = "Winter Warrior", QuestID = 2, MonsterPos = CFrame.new(1150.5, 430.2, -5150.8) }
+    }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับเกาะที่ 4 และ 5 ]]
+Tabs.Main:AddParagraph({Title = "GRAVEYARD", Content = "เกาะสุสาน (เลเวล 950-1000)"})
+Tabs.Main:AddToggle("FarmZombie", { Title = "Auto Farm: Zombie", Default = false }):OnChanged(function(v) _G.Farm_Zombie = v end)
+Tabs.Main:AddToggle("FarmVampire", { Title = "Auto Farm: Vampire", Default = false }):OnChanged(function(v) _G.Farm_Vampire = v end)
+
+Tabs.Main:AddParagraph({Title = "SNOW MOUNTAIN", Content = "ภูเขาหิมะ (เลเวล 1000-1100)"})
+Tabs.Main:AddToggle("FarmSnowTrooper", { Title = "Auto Farm: Snow Trooper", Default = false }):OnChanged(function(v) _G.Farm_SnowTrooper = v end)
+Tabs.Main:AddToggle("FarmWinterWarrior", { Title = "Auto Farm: Winter Warrior", Default = false }):OnChanged(function(v) _G.Farm_WinterWarrior = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_Zombie or _G.Farm_Vampire or _G.Farm_SnowTrooper or _G.Farm_WinterWarrior then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                local Target, QName, QID, QPos, MPos = nil, "", 1, nil, nil
+
+                if _G.Farm_Zombie then
+                    Target, QName, QID = Sea2_Late_Data.Graveyard.Mob1.Name, "ZombieQuest", 1
+                    QPos, MPos = Sea2_Late_Data.Graveyard.QuestPos, Sea2_Late_Data.Graveyard.Mob1.MonsterPos
+                elseif _G.Farm_Vampire then
+                    Target, QName, QID = Sea2_Late_Data.Graveyard.Mob2.Name, "ZombieQuest", 2
+                    QPos, MPos = Sea2_Late_Data.Graveyard.QuestPos, Sea2_Late_Data.Graveyard.Mob2.MonsterPos
+                elseif _G.Farm_SnowTrooper then
+                    Target, QName, QID = Sea2_Late_Data.SnowMountain.Mob1.Name, "SnowMountainQuest", 1
+                    QPos, MPos = Sea2_Late_Data.SnowMountain.QuestPos, Sea2_Late_Data.SnowMountain.Mob1.MonsterPos
+                elseif _G.Farm_WinterWarrior then
+                    Target, QName, QID = Sea2_Late_Data.SnowMountain.Mob2.Name, "SnowMountainQuest", 2
+                    QPos, MPos = Sea2_Late_Data.SnowMountain.QuestPos, Sea2_Late_Data.SnowMountain.Mob2.MonsterPos
+                end
+
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    Root.CFrame = QPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", QName, QID)
+                else
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == Target and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+                    if Enemy then
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = MPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดเกาะ Hot and Cold ]]
+local Island6_Sea2 = {
+    QuestPos = CFrame.new(-5430.5, 15.6, -5295.4), -- จุดรับเควส (อยู่ตรงกลางระหว่างสองฝั่ง)
+    -- ฝั่งไฟ (Hot Side)
+    Mob1 = { Name = "Lab Subordinate", QuestID = 1, MonsterPos = CFrame.new(-5750.2, 15.6, -5050.5) },
+    -- ฝั่งน้ำแข็ง (Cold Side)
+    Mob2 = { Name = "Cold Soldier", QuestID = 2, MonsterPos = CFrame.new(-5950.4, 15.6, -5550.2) }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับเกาะ Hot and Cold ]]
+Tabs.Main:AddParagraph({Title = "HOT AND COLD", Content = "เกาะไฟและน้ำแข็ง (เลเวล 1100-1250)"})
+
+Tabs.Main:AddToggle("FarmLabSubordinate", { Title = "Auto Farm: Lab Subordinate (ฝั่งไฟ)", Default = false }):OnChanged(function(v) _G.Farm_LabSub = v end)
+Tabs.Main:AddToggle("FarmColdSoldier", { Title = "Auto Farm: Cold Soldier (ฝั่งน้ำแข็ง)", Default = false }):OnChanged(function(v) _G.Farm_ColdSoldier = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_LabSub or _G.Farm_ColdSoldier then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เลือกเป้าหมาย
+                local TargetData = _G.Farm_LabSub and Island6_Sea2.Mob1 or Island6_Sea2.Mob2
+                
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    -- วาร์ปไปรับเควส (FireAndIceQuest)
+                    Root.CFrame = Island6_Sea2.QuestPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "FireAndIceQuest", TargetData.QuestID)
+                else
+                    -- วาร์ปไปจ่อหัว
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == TargetData.Name and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        -- รอมอนเกิด
+                        Root.CFrame = TargetData.MonsterPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดเรือผีสิง ]]
+local Island7_Sea2 = {
+    QuestPos = CFrame.new(923.1, 125.1, 32885.2), -- จุดรับเควสข้างในเรือ
+    -- มอนสเตอร์ตัวที่ 1 (Ship Deckhand) - เลเวล 1250
+    Mob1 = { Name = "Ship Deckhand", QuestID = 1, MonsterPos = CFrame.new(820.4, 125.1, 32950.5) },
+    -- มอนสเตอร์ตัวที่ 2 (Ship Steward) - เลเวล 1300
+    Mob2 = { Name = "Ship Steward", QuestID = 2, MonsterPos = CFrame.new(950.2, 125.1, 33100.8) }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับเรือผีสิง ]]
+Tabs.Main:AddParagraph({Title = "CURSED SHIP", Content = "เรือผีสิง (เลเวล 1250-1350)"})
+
+Tabs.Main:AddToggle("FarmShipDeckhand", { Title = "Auto Farm: Ship Deckhand", Default = false }):OnChanged(function(v) _G.Farm_ShipDeckhand = v end)
+Tabs.Main:AddToggle("FarmShipSteward", { Title = "Auto Farm: Ship Steward", Default = false }):OnChanged(function(v) _G.Farm_ShipSteward = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_ShipDeckhand or _G.Farm_ShipSteward then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เลือกเป้าหมาย
+                local TargetData = _G.Farm_ShipDeckhand and Island7_Sea2.Mob1 or Island7_Sea2.Mob2
+                
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    -- วาร์ปไปรับเควส (ShipQuest1)
+                    Root.CFrame = Island7_Sea2.QuestPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "ShipQuest1", TargetData.QuestID)
+                else
+                    -- วาร์ปไปจ่อหัว
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == TargetData.Name and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        -- ในเรือเพดานต่ำ พี่ปรับความสูงลงมาเหลือ 10 จะได้ไม่ติดเพดานครับ
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = TargetData.MonsterPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดปราสาทน้ำแข็ง ]]
+local Island8_Sea2 = {
+    QuestPos = CFrame.new(5842.1, 28.5, -6320.4), -- จุดรับเควสหน้าปราสาท
+    -- มอนสเตอร์ตัวที่ 1 (Arctic Warrior) - เลเวล 1350
+    Mob1 = { Name = "Arctic Warrior", QuestID = 1, MonsterPos = CFrame.new(6050.2, 28.5, -6250.8) },
+    -- มอนสเตอร์ตัวที่ 2 (Snow Lurker) - เลเวล 1400
+    Mob2 = { Name = "Snow Lurker", QuestID = 2, MonsterPos = CFrame.new(5750.4, 28.5, -6500.2) }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับปราสาทน้ำแข็ง ]]
+Tabs.Main:AddParagraph({Title = "ICE CASTLE", Content = "ปราสาทน้ำแข็ง (เลเวล 1350-1425)"})
+
+Tabs.Main:AddToggle("FarmArcticWarrior", { Title = "Auto Farm: Arctic Warrior", Default = false }):OnChanged(function(v) _G.Farm_ArcticWarrior = v end)
+Tabs.Main:AddToggle("FarmSnowLurker", { Title = "Auto Farm: Snow Lurker", Default = false }):OnChanged(function(v) _G.Farm_SnowLurker = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_ArcticWarrior or _G.Farm_SnowLurker then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เลือกเป้าหมาย
+                local TargetData = _G.Farm_ArcticWarrior and Island8_Sea2.Mob1 or Island8_Sea2.Mob2
+                
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    -- วาร์ปไปรับเควส (IceCastleQuest)
+                    Root.CFrame = Island8_Sea2.QuestPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "IceCastleQuest", TargetData.QuestID)
+                else
+                    -- วาร์ปไปจ่อหัว
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == TargetData.Name and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = TargetData.MonsterPos
+                    end
+                end
+            end)
+        end
+    end
+end)
+-- [[ 📍 ข้อมูลพิกัดเกาะที่ถูกลืม ]]
+local Island9_Sea2 = {
+    QuestPos = CFrame.new(-3050.5, 235.2, -10150.4), -- จุดรับเควสบนเกาะ
+    -- มอนสเตอร์ตัวที่ 1 (Sea Soldier) - เลเวล 1425
+    Mob1 = { Name = "Sea Soldier", QuestID = 1, MonsterPos = CFrame.new(-3150.2, 235.2, -10300.5) },
+    -- มอนสเตอร์ตัวที่ 2 (Water Fighter) - เลเวล 1475
+    Mob2 = { Name = "Water Fighter", QuestID = 2, MonsterPos = CFrame.new(-3380.4, 235.2, -10550.2) }
+}
+
+-- [[ 🎨 สร้าง UI สำหรับเกาะที่ถูกลืม ]]
+Tabs.Main:AddParagraph({Title = "FORGOTTEN ISLAND", Content = "เกาะสุดท้ายของโลก 2 (เลเวล 1425-1500)"})
+
+Tabs.Main:AddToggle("FarmSeaSoldier", { Title = "Auto Farm: Sea Soldier", Default = false }):OnChanged(function(v) _G.Farm_SeaSoldier = v end)
+Tabs.Main:AddToggle("FarmWaterFighter", { Title = "Auto Farm: Water Fighter", Default = false }):OnChanged(function(v) _G.Farm_WaterFighter = v end)
+
+-- [[ 🚀 ระบบสั่งการพิกัด ]]
+task.spawn(function()
+    while task.wait() do
+        if _G.Farm_SeaSoldier or _G.Farm_WaterFighter then
+            pcall(function()
+                local MyChar = game.Players.LocalPlayer.Character
+                local Root = MyChar.HumanoidRootPart
+                
+                -- เลือกเป้าหมาย
+                local TargetData = _G.Farm_SeaSoldier and Island9_Sea2.Mob1 or Island9_Sea2.Mob2
+                
+                if not game.Players.LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
+                    -- วาร์ปไปรับเควส (ForgottenQuest)
+                    Root.CFrame = Island9_Sea2.QuestPos
+                    task.wait(0.5)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "ForgottenQuest", TargetData.QuestID)
+                else
+                    -- วาร์ปไปจ่อหัว
+                    local Enemy = nil
+                    for _, v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == TargetData.Name and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            Enemy = v
+                            break
+                        end
+                    end
+
+                    if Enemy then
+                        -- เกาะนี้ลมแรง พี่ตั้งความสูงไว้ที่ 12 หน่วยกำลังดีครับ
+                        Root.CFrame = Enemy.HumanoidRootPart.CFrame * CFrame.new(0, 12, 0)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", {[1] = Enemy.HumanoidRootPart.Position, [2] = {[1] = Enemy}})
+                    else
+                        Root.CFrame = TargetData.MonsterPos
+                    end
+                end
+            end)
+        end
+    end
+end)
