@@ -1,9 +1,17 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-math.randomseed(tick())
+-- [ 0. ตั้งค่าตัวแปรเริ่มต้น (Essential Variables) ]
+local LocalPlayer = game:GetService("Players").LocalPlayer
+local U_Hub_Config = {
+    Farm = {
+        AutoFarm = false,
+        BringMob = true,
+        FastAttack = true,
+        AutoSelectWeapon = "Melee"
+    }
+}
 
-local Window = Fluent:CreateWindow({
+-- [ 0.1 ตารางข้อมูลเกาะ (ใส่ปีกกาเปิดไว้ตรงนี้หนึ่ง!) ]
+local QuestList = {
+    -- หนึ่งเอาเกาะ 1-13 ที่หนึ่งมีอยู่แล้ว มาใส่ไว้ในนี้ทั้งหมดเลยครับ -- Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
     SubTitle = "BY Neung",
     TabWidth = 160,
