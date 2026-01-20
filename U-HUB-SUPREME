@@ -1,17 +1,9 @@
--- [ 0. ตั้งค่าตัวแปรเริ่มต้น (Essential Variables) ]
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local U_Hub_Config = {
-    Farm = {
-        AutoFarm = false,
-        BringMob = true,
-        FastAttack = true,
-        AutoSelectWeapon = "Melee"
-    }
-}
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+math.randomseed(tick())
 
--- [ 0.1 ตารางข้อมูลเกาะ (ใส่ปีกกาเปิดไว้ตรงนี้หนึ่ง!) ]
-local QuestList = {
-    -- หนึ่งเอาเกาะ 1-13 ที่หนึ่งมีอยู่แล้ว มาใส่ไว้ในนี้ทั้งหมดเลยครับ -- Window = Fluent:CreateWindow({
+local Window = Fluent:CreateWindow({
     Title = "U-HUB SUPREME 💎",
     SubTitle = "BY Neung",
     TabWidth = 160,
@@ -182,483 +174,49 @@ Tabs.Misc:AddButton({
     end
 })
 
-
 Fluent:Notify({Title = "U-HUB SUPREME", Content = "โหลดระบบฟาร์มและแก้ลากมือถือเสร็จสิ้น!", Duration = 5})
--- [[ ------------------------------------------------------------ ]]
--- [[ U-HUB SUPREME : MARU STYLE LAYOUT (BLOX FRUITS)              ]]
--- [[ SECTION 1: WINDOW & FARMING TAB (เหมือน Maru Hub)            ]]
--- [[ ------------------------------------------------------------ ]]
-
--- [ 1. สร้างหน้าต่างหลัก ]
-local Window = Fluent:CreateWindow({
-    Title = "U-HUB SUPREME : MARU STYLE",
-    SubTitle = "BY NEUNG (11 YEARS OLD)",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Theme = "Dark"
-})
-
--- [ 2. การจัดเรียง Tab แบบ Maru Hub ]
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main Farm", Icon = "swords" }),
-    Stats = Window:AddTab({ Title = "Stats", Icon = "line-chart" }),
-    Teleport = Window:AddTab({ Title = "Teleport", Icon = "map-pin" }),
-    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "skull" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
-
--- [ 3. หน้าต่างฟาร์ม (หน้าแรกที่หนึ่งต้องการ) ]
-Tabs.Main:AddParagraph({
-    Title = "LEVEL FARMING",
-    Content = "ระบบฟาร์มเลเวลอัตโนมัติแบบ Maru Style"
-})
-
--- ตัวเลือกอาวุธ (Dropdown)
+-- [[ 1. เมนูเลือกอาวุธ (ไว้อันแรกสุดตามที่หนึ่งต้องการ) ]]
 local WeaponDropdown = Tabs.Main:AddDropdown("WeaponSelect", {
     Title = "Select Weapon",
-    Description = "เลือกอาวุธที่จะใช้ตีมอนสเตอร์",
+    Description = "เลือกอาวุธที่จะใช้ฟาร์ม",
     Values = {"Melee", "Sword", "Blox Fruit"},
     Default = "Melee",
-    Callback = function(Value)
-        U_Hub_Config.Farm.AutoSelectWeapon = Value
-    end
 })
 
--- ปุ่มเปิด/ปิดฟาร์ม (Toggle)
-Tabs.Main:AddToggle("AutoFarmLevel", {
-    Title = "Auto Farm Level",
-    Description = "ฟาร์มเลเวลแบบเปลี่ยนเกาะอัตโนมัติ",
-    Default = false
-}):OnChanged(function(v)
-    U_Hub_Config.Farm.AutoFarm = v
+WeaponDropdown:OnChanged(function(Value)
+    _G.U_Hub_Config.Farm.Weapon = Value
 end)
 
--- ปุ่มฟาร์มแบบรวบมอน (Bring Mob)
+-- [[ 2. ตัวคั่นแบ่งส่วนให้ดูสวยงาม ]]
+Tabs.Main:AddParagraph({
+    Title = "FARMING CONTROLS",
+    Content = "ตั้งค่าระบบฟาร์มด้านล่างนี้"
+})
+
+-- [[ 3. ปุ่มเปิด-ปิดฟาร์มหลัก ]]
+local AutoFarmToggle = Tabs.Main:AddToggle("AutoFarmLevel", {
+    Title = "Auto Farm Level",
+    Description = "ฟาร์มเลเวลอัตโนมัติ (โลก 1)",
+    Default = false
+})
+
+AutoFarmToggle:OnChanged(function(v)
+    _G.U_Hub_Config.Farm.AutoFarm = v
+end)
+
+-- [[ 4. ปุ่มเสริมอื่นๆ ]]
 Tabs.Main:AddToggle("BringMob", {
     Title = "Bring Mob",
-    Description = "ลากมอนสเตอร์มาลงที่จุดเดียว",
+    Description = "ลากมอนสเตอร์มารวมกัน",
     Default = true
 }):OnChanged(function(v)
-    U_Hub_Config.Farm.BringMob = v
+    _G.U_Hub_Config.Farm.BringMob = v
 end)
 
--- ปุ่มตีเร็ว (Fast Attack)
 Tabs.Main:AddToggle("FastAttack", {
-    Title = "Fast Attack (No Animation)",
-    Description = "ตีมอนสเตอร์รัวๆ โดยไม่มีท่าทาง",
+    Title = "Fast Attack",
+    Description = "โจมตีเร็ว (No Animation)",
     Default = true
 }):OnChanged(function(v)
-    U_Hub_Config.Farm.FastAttack = v
+    _G.U_Hub_Config.Farm.FastAttack = v
 end)
-
--- [ 4. ระบบฟาร์มเบื้องหลัง (Core Farming Logic) ]
-task.spawn(function()
-    while task.wait() do
-        if U_Hub_Config.Farm.AutoFarm then
-            pcall(function()
-                -- ในนี้คือส่วนที่จะใส่โค้ด "ตรวจสอบเควส" และ "วาร์ปไปตอมอนสเตอร์"
-                -- พี่แยกบรรทัดไว้กว้างๆ ให้โค้ดมันดูอลังการเหมือน Maru Hub
-                
-                local MyLevel = LocalPlayer.Data.Level.Value
-                
-                -- ตัวอย่างระบบเช็คเกาะ (ยาวๆ)
-                if MyLevel >= 1 and MyLevel <= 14 then
-                    -- ไปเกาะเริ่มต้น
-                elseif MyLevel >= 15 and MyLevel <= 29 then
-                    -- ไปเกาะจังเกิ้ล
-                end
-            end)
-        end
-    end
-end)
-
--- [[ ------------------------------------------------------------ ]]
--- [[ END OF MARU STYLE FARMING SECTION ]]
--- [[ ------------------------------------------------------------ ]]
--- [[ เริ่มต้นเกาะที่ 1: STARTER ISLAND ]]
-        {
-            Level = 0, 
-            Island = "Starter Island", 
-            Monster = "Bandit", 
-            QuestName = "BanditQuest1", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส
-            QuestPos = CFrame.new(1059.3, 15.4, 1550.5), 
-            -- พิกัดจุดที่มอนสเตอร์เกิด (จุดที่ 1)
-            MonsterPos = CFrame.new(1185.2, 7.3, 1620.4),
-            -- เพิ่มคอมเมนต์เพื่อบอกตำแหน่ง
-            Description = "ฟาร์มโจรป่าหน้าเกาะเริ่มต้น"
-        },
-        -- [[ จบเกาะที่ 1 ]]
--- [[ เริ่มต้นเกาะที่ 2: JUNGLE ISLAND ]]
-        {
-            Level = 10, 
-            Island = "Jungle", 
-            Monster = "Monkey", 
-            QuestName = "JungleQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่บนหอคอยเล็กๆ)
-            QuestPos = CFrame.new(-1598.5, 35.5, 153.2), 
-            -- พิกัดจุดฟาร์มลิง
-            MonsterPos = CFrame.new(-1623.1, 15.6, 6.7),
-            Description = "ฟาร์มลิงป่าพิกัดแรก"
-        },
-        {
-            Level = 15, 
-            Island = "Jungle", 
-            Monster = "Gorilla", 
-            QuestName = "JungleQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(-1598.5, 35.5, 153.2), 
-            -- พิกัดเกาะกอริลล่า
-            MonsterPos = CFrame.new(-1204.6, 5.6, -500.8),
-            Description = "ฟาร์มกอริลล่าตัวใหญ่"
-        },
-        -- [[ จบเกาะที่ 2 ]]
--- [[ เริ่มต้นเกาะที่ 3: PIRATE VILLAGE (BUGGY) ]]
-        {
-            Level = 30, 
-            Island = "Pirate Village", 
-            Monster = "Pirate", 
-            QuestName = "BuggyQuest1", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ใกล้ๆ ท่าเรือ)
-            QuestPos = CFrame.new(-1140.2, 4.8, 3828.3), 
-            -- พิกัดจุดรวมกลุ่มโจรสลัด
-            MonsterPos = CFrame.new(-1218.4, 4.8, 3915.2),
-            Description = "ฟาร์มโจรสลัดลูกน้องบากี้"
-        },
-        {
-            Level = 40, 
-            Island = "Pirate Village", 
-            Monster = "Brute", 
-            QuestName = "BuggyQuest1", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(-1140.2, 4.8, 3828.3), 
-            -- พิกัดจุดเกิดพวกตัวอ้วน (Brute)
-            MonsterPos = CFrame.new(-1352.4, 15.3, 4292.1),
-            Description = "ฟาร์มพวกตัวอ้วน Brute พลังเยอะ"
-        },
-        -- [[ จบเกาะที่ 3 ]]
--- [[ เริ่มต้นเกาะที่ 4: DESERT ISLAND ]]
-        {
-            Level = 60, 
-            Island = "Desert", 
-            Monster = "Desert Bandit", 
-            QuestName = "DesertQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ตรงทางเข้าหมู่บ้าน)
-            QuestPos = CFrame.new(942.5, 6.5, 4480.1), 
-            -- พิกัดจุดรวมกลุ่มโจรทะเลทราย
-            MonsterPos = CFrame.new(995.1, 6.5, 4390.4),
-            Description = "ฟาร์มโจรทะเลทราย พิกัดเป๊ะ"
-        },
-        {
-            Level = 75, 
-            Island = "Desert", 
-            Monster = "Desert Officer", 
-            QuestName = "DesertQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(942.5, 6.5, 4480.1), 
-            -- พิกัดจุดเกิดทหารทัพทะเลทราย
-            MonsterPos = CFrame.new(1540.2, 6.5, 4420.5),
-            Description = "ฟาร์มทหาร Officer ในทะเลทราย"
-        },
-        -- [[ จบเกาะที่ 4 ]]
--- [[ เริ่มต้นเกาะที่ 5: FROZEN VILLAGE (SNOW ISLAND) ]]
-        {
-            Level = 90, 
-            Island = "Frozen Village", 
-            Monster = "Snow Bandit", 
-            QuestName = "SnowQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ใกล้ๆ ถ้ำขายฮาคิ)
-            QuestPos = CFrame.new(1386.8, 87.2, -1298.5), 
-            -- พิกัดจุดรวมกลุ่มโจรหิมะ
-            MonsterPos = CFrame.new(1350.1, 87.2, -1320.4),
-            Description = "ฟาร์มโจรหิมะบนยอดเขา"
-        },
-        {
-            Level = 100, 
-            Island = "Frozen Village", 
-            Monster = "Snowman", 
-            QuestName = "SnowQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(1386.8, 87.2, -1298.5), 
-            -- พิกัดจุดเกิดมนุษย์หิมะ Snowman
-            MonsterPos = CFrame.new(1280.4, 105.2, -1380.1),
-            Description = "ฟาร์มสโนว์แมนตัวขาวๆ"
-        },
-        -- [[ จบเกาะที่ 5 ]]
--- [[ เริ่มต้นเกาะที่ 6: MARINEFORD (MIDDLE ISLAND) ]]
-        {
-            Level = 120, 
-            Island = "Marineford", 
-            Monster = "Chief Petty Officer", 
-            QuestName = "MarineQuest1", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ตรงซุ้มประตูด้านหน้า)
-            QuestPos = CFrame.new(-4842.2, 21.2, 4366.5), 
-            -- พิกัดจุดรวมกลุ่มทหารเรือ Chief
-            MonsterPos = CFrame.new(-4810.5, 21.2, 4420.2),
-            Description = "ฟาร์มทหารเรือระดับหัวหน้า"
-        },
-        {
-            Level = 130, 
-            Island = "Marineford", 
-            Monster = "Vice Admiral", 
-            QuestName = "MarineQuest1", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(-4842.2, 21.2, 4366.5), 
-            -- พิกัดจุดเกิดพลโท Vice Admiral
-            MonsterPos = CFrame.new(-4770.4, 21.2, 4300.5),
-            Description = "ฟาร์มบอสพลโทในลานกว้าง"
-        },
-        -- [[ จบเกาะที่ 6 ]]
--- [[ เริ่มต้นเกาะที่ 7: SKYPIA (LOWER SKY) ]]
-        {
-            Level = 150, 
-            Island = "Skypia", 
-            Monster = "Sky Bandit", 
-            QuestName = "SkyQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่บนก้อนเมฆชั้นแรก)
-            QuestPos = CFrame.new(-4841.5, 717.2, -2620.1), 
-            -- พิกัดจุดรวมกลุ่มโจรท้องฟ้า
-            MonsterPos = CFrame.new(-4950.2, 717.2, -2600.5),
-            Description = "ฟาร์มโจรบนเกาะลอยฟ้าชั้นแรก"
-        },
-        {
-            Level = 175, 
-            Island = "Skypia", 
-            Monster = "Dark Steward", 
-            QuestName = "SkyQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(-4841.5, 717.2, -2620.1), 
-            -- พิกัดจุดเกิดพวก Dark Steward
-            MonsterPos = CFrame.new(-4800.4, 900.2, -2700.1),
-            Description = "ฟาร์มมอนสเตอร์ชุดดำบนท้องฟ้า"
-        },
-        -- [[ จบเกาะที่ 7 ]]
--- [[ เริ่มต้นเกาะที่ 8: PRISON ISLAND (IMPEL DOWN) ]]
-        {
-            Level = 190, 
-            Island = "Prison", 
-            Monster = "Prisoner", 
-            QuestName = "PrisonQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่หน้าทางเข้าคุก)
-            QuestPos = CFrame.new(4844.2, 5.6, 742.3), 
-            -- พิกัดจุดรวมนักโทษ Prisoner
-            MonsterPos = CFrame.new(4740.1, 5.6, 830.5),
-            Description = "ฟาร์มนักโทษในกรงขัง"
-        },
-        {
-            Level = 210, 
-            Island = "Prison", 
-            Monster = "Dangerous Prisoner", 
-            QuestName = "PrisonQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(4844.2, 5.6, 742.3), 
-            -- พิกัดจุดเกิดนักโทษอันตราย
-            MonsterPos = CFrame.new(4800.5, 5.6, 920.4),
-            Description = "ฟาร์มนักโทษอันตรายเลเวล 210"
-        },
-        {
-            Level = 230, 
-            Island = "Prison", 
-            Monster = "Warden", 
-            QuestName = "PrisonQuest", 
-            QuestID = 3, -- เควสบอสตัวที่ 1
-            QuestPos = CFrame.new(4844.2, 5.6, 742.3), 
-            MonsterPos = CFrame.new(4844.2, 5.6, 1120.5),
-            Description = "ฟาร์มบอสพัศดี Warden"
-        },
-        -- [[ จบเกาะที่ 8 ]]
--- [[ เริ่มต้นเกาะที่ 10: MAGMA VILLAGE ]]
-        {
-            Level = 300, 
-            Island = "Magma Village", 
-            Monster = "Military Soldier", 
-            QuestName = "MagmaQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ตรงบ้านหลังเล็กๆ)
-            QuestPos = CFrame.new(-5315.6, 12.2, 8515.3), 
-            -- พิกัดจุดรวมพลทหารแม็กม่า
-            MonsterPos = CFrame.new(-5400.1, 12.2, 8450.2),
-            Description = "ฟาร์มทหารแม็กม่าระดับทั่วไป"
-        },
-        {
-            Level = 330, 
-            Island = "Magma Village", 
-            Monster = "Military Spy", 
-            QuestName = "MagmaQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(-5315.6, 12.2, 8515.3), 
-            -- พิกัดจุดเกิดพวกสปาย (อยู่บนภูเขาไฟ)
-            MonsterPos = CFrame.new(-5800.5, 70.4, 8800.1),
-            Description = "ฟาร์มทหารสปายแอบซุ่ม"
-        },
-        -- [[ จบเกาะที่ 10 ]]
--- [[ เริ่มต้นเกาะที่ 11: UNDERWATER CITY (FISHMAN ISLAND) ]]
-        {
-            Level = 375, 
-            Island = "Underwater City", 
-            Monster = "Fishman Warrior", 
-            QuestName = "FishmanQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่หน้าทางเข้าเมืองใต้ทะเล)
-            QuestPos = CFrame.new(61122.5, 18.2, 1565.1), 
-            -- พิกัดจุดรวมกลุ่มนักรบเงือก
-            MonsterPos = CFrame.new(61000.4, 18.2, 1400.2),
-            Description = "ฟาร์มนักรบเงือกใต้ทะเล"
-        },
-        {
-            Level = 400, 
-            Island = "Underwater City", 
-            Monster = "Fishman Commando", 
-            QuestName = "FishmanQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(61122.5, 18.2, 1565.1), 
-            -- พิกัดจุดเกิดหน่วยคอมมานโดเงือก
-            MonsterPos = CFrame.new(61500.2, 18.2, 1600.5),
-            Description = "ฟาร์มทหารเงือกระดับสูง"
-        },
-        -- [[ จบเกาะที่ 11 ]]
--- [[ เริ่มต้นเกาะที่ 12: UPPER SKYLANDS (GOD'S ISLAND) ]]
-        {
-            Level = 450, 
-            Island = "Upper Skylands", 
-            Monster = "God's Guard", 
-            QuestName = "SkyExp1Quest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ชั้นแรกของเกาะบน)
-            QuestPos = CFrame.new(-5780.2, 5775.3, -2280.5), 
-            -- พิกัดจุดรวมกลุ่มทหารเทพ
-            MonsterPos = CFrame.new(-5700.4, 5775.3, -2100.2),
-            Description = "ฟาร์มทหารยามของพระเจ้า"
-        },
-        {
-            Level = 525, 
-            Island = "Upper Skylands", 
-            Monster = "Royal Squad", 
-            QuestName = "SkyExp2Quest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ถัดขึ้นไปอีกชั้น)
-            QuestPos = CFrame.new(-7900.4, 5670.2, -1400.5), 
-            -- พิกัดจุดเกิดหน่วยรบหลวง
-            MonsterPos = CFrame.new(-7800.2, 5670.2, -1500.1),
-            Description = "ฟาร์มหน่วยรบหลวง Royal Squad"
-        },
-        {
-            Level = 575, 
-            Island = "Upper Skylands", 
-            Monster = "Shanda", 
-            QuestName = "SkyExp2Quest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดียวกับเลเวล 525)
-            QuestPos = CFrame.new(-7900.4, 5670.2, -1400.5), 
-            -- พิกัดจุดเกิดพวกแชนเดีย
-            MonsterPos = CFrame.new(-7700.5, 5670.2, -1450.4),
-            Description = "ฟาร์มนักรบแชนเดียบนท้องฟ้า"
-        },
-        -- [[ จบเกาะที่ 12 ]]
--- [[ เริ่มต้นเกาะสุดท้ายของโลก 1: FOUNTAIN CITY ]]
-        {
-            Level = 625, 
-            Island = "Fountain City", 
-            Monster = "Galley Pirate", 
-            QuestName = "FountainQuest", 
-            QuestID = 1, 
-            -- พิกัด NPC รับเควส (อยู่ใกล้ๆ น้ำพุกลางเมือง)
-            QuestPos = CFrame.new(5250.2, 38.5, 4050.1), 
-            -- พิกัดจุดรวมกลุ่มโจรสลัดกัลเลย์
-            MonsterPos = CFrame.new(5400.4, 38.5, 3900.5),
-            Description = "ฟาร์มโจรสลัดกัลเลย์ข้างน้ำพุ"
-        },
-        {
-            Level = 650, 
-            Island = "Fountain City", 
-            Monster = "Galley Captain", 
-            QuestName = "FountainQuest", 
-            QuestID = 2, 
-            -- พิกัด NPC รับเควส (ตัวเดิม)
-            QuestPos = CFrame.new(5250.2, 38.5, 4050.1), 
-            -- พิกัดจุดเกิดกัปตันกัลเลย์
-            MonsterPos = CFrame.new(5600.1, 38.5, 4000.2),
-            Description = "ฟาร์มกัปตันกัลเลย์ ตัวตึงเกาะน้ำพุ"
-        },
-        -- [[ จบเกาะที่ 13 และจบโลก 1 ]]
--- [[ ------------------------------------------------------------ ]]
--- [[ SECTION: THE PRO ENGINE (ATTACK & FARMING LOGIC)             ]]
--- [[ ส่วนนี้คือสมองที่สั่งให้ตัวละครวาร์ปไปตามพิกัดและยิงดาเมจใส่ Server   ]]
--- [[ ------------------------------------------------------------ ]]
-
--- [ 1. ฟังก์ชันการโจมตีแบบ Remote (เหมือน Maru Hub) ]
-local function ProFastAttack(Target)
-    if Target and Target:FindFirstChild("Humanoid") and Target.Humanoid.Health > 0 then
-        -- ยิง Remote ไปที่ Server เพื่อสั่งลดเลือดมอนสเตอร์
-        local Remote = game:GetService("ReplicatedStorage").Remotes.CommF_
-        Remote:InvokeServer("Attack", {
-            [1] = Target.HumanoidRootPart.Position,
-            [2] = {[1] = Target}
-        })
-        
-        -- ตัดท่าทางตัวละครออก (No Animation) เพื่อความเร็วสูงสุด
-        for _, v in pairs(LocalPlayer.Character.Humanoid:GetPlayingAnimationTracks()) do
-            v:Stop()
-        end
-    end
-end
-
--- [ 2. ลูปการทำงานหลัก (Main Farming Loop) ]
-task.spawn(function()
-    while task.wait() do
-        if U_Hub_Config.Farm.AutoFarm then
-            pcall(function()
-                local MyQuest = CheckQuest() -- ดึงพิกัดจาก QuestList ที่หนึ่งก๊อปวางไว้
-                local MyChar = LocalPlayer.Character
-                local Root = MyChar.HumanoidRootPart
-                
-                -- ตรวจสอบเควส
-                if not LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") then
-                    -- วาร์ปไปรับเควสตามพิกัดที่หนึ่งตั้งไว้
-                    Root.CFrame = MyQuest.QuestPos
-                    task.wait(0.5)
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", MyQuest.QuestName, MyQuest.QuestID)
-                else
-                    -- หาตัวมอนสเตอร์ตามพิกัดที่หนึ่งตั้งไว้
-                    for _, enemy in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
-                        if enemy.Name == MyQuest.Monster and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-                            
-                            -- วาร์ปมอนสเตอร์มาหาเรา (Bring Mob)
-                            if U_Hub_Config.Farm.BringMob then
-                                enemy.HumanoidRootPart.CFrame = Root.CFrame * CFrame.new(0, 0, -5)
-                                enemy.HumanoidRootPart.CanCollide = false
-                            end
-                            
-                            -- วาร์ปเราไปจ่อบนหัวมอนสเตอร์ (ระยะปลอดภัย)
-                            Root.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                            
-                            -- สั่งยิงดาเมจรัวๆ
-                            ProFastAttack(enemy)
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- [[ ------------------------------------------------------------ ]]
--- [[ FINISHED: ALL SEA 1 SYSTEMS LOADED                          ]]
--- [[ ------------------------------------------------------------ ]]
