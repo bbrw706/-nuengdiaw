@@ -1373,3 +1373,32 @@ task.spawn(function()
         end
     end
 end)
+-- [[ วางต่อท้ายไฟล์เดิมของหนึ่งได้เลย ]]
+
+local function SuperFastAttack(Target)
+    if Target and Target:FindFirstChild("Humanoid") and Target.Humanoid.Health > 0 then
+        pcall(function()
+            -- บังคับถือผลปีศาจ
+            for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if v:IsA("Tool") and v.ToolTip == "Blox Fruit" then
+                    LocalPlayer.Character.Humanoid:EquipTool(v)
+                end
+            end
+            -- รัวดาเมจ 10 ครั้ง (สะใจแน่นอน)
+            local Remote = game:GetService("ReplicatedStorage").Remotes.CommF_
+            for i = 1, 10 do 
+                Remote:InvokeServer("Attack", {[1] = Target.HumanoidRootPart.Position, [2] = {[1] = Target}})
+            end
+        end)
+    end
+end
+
+-- [[ แล้วแก้ใน Loop ฟาร์มด้านล่างให้เป็นแบบนี้ ]]
+task.spawn(function()
+    while task.wait() do
+        if Options.AutoFarmLevel.Value then
+            -- ... (โค้ดวาร์ปเดิมของหนึ่ง) ...
+            SuperFastAttack(enemy) -- เปลี่ยนมาเรียกใช้ตัว "Super" แทนตัวเก่า
+        end
+    end
+end)
